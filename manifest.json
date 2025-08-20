@@ -1,0 +1,11 @@
+{
+  "id": "audio-pluglist",
+  "name": "Audio PlugList",
+  "version": "1.0.3",
+  "minAppVersion": "1.8.0",
+  "description": "Playlist-based audio player with segmented footer controls, marquee title, shuffle/repeat, fade-out stop, and tab labels with icons.",
+  "author": "ragetrip",
+  "isDesktopOnly": false,
+  "main": "main.js",
+  "license": "MIT"
+}

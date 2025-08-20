@@ -1,0 +1,178 @@
+
+/* Footer: half width, bottom-right */
+.ap-footer-player{
+  position:fixed;
+  right:0;
+  bottom:0;
+  padding:4px 8px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  border-top:1px solid var(--background-modifier-border);
+  background:var(--background-primary);
+  z-index:1000;
+  width:50vw;
+}
+.ap-footer-player select{ font-size:12px }
+.ap-footer-player .ap-title{ position:relative; overflow:hidden; white-space:nowrap; width:26ch; max-width:26ch; }
+.ap-footer-player input[type="range"]{ margin:0 4px }
+
+/* Footer title marquee */
+.ap-title .ap-marquee{ display:inline-block; white-space:nowrap; will-change:transform; animation: apl-marquee linear infinite; animation-duration: var(--apl-marquee-duration, 14s); }
+.ap-title .ap-marquee:hover{ animation-play-state: paused; }
+@keyframes apl-marquee{
+  0% { transform: translateX(0); }
+  10% { transform: translateX(0); } /* pause before scroll */
+  90% { transform: translateX(-50%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Footer segmented pill control */
+.ap-footer-group{
+  display:inline-flex;
+  border:1px solid var(--background-modifier-border);
+  border-radius:999px;
+  overflow:hidden;
+  background: var(--background-secondary);
+}
+.ap-footer-seg{
+  appearance:none;
+  border:0;
+  padding:6px 10px;
+  font-size:16px;
+  line-height:1;
+  background:transparent;
+  color:var(--text-normal);
+  cursor:pointer;
+}
+.ap-footer-seg + .ap-footer-seg{ border-left:1px solid var(--background-modifier-border); }
+.ap-footer-seg:hover{ background: rgba(59,130,246,.12); } /* hover light blue */
+.ap-footer-seg.is-active{
+  background: #3b82f6;
+  color: white;
+}
+
+/* Tab layout */
+.ap-row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.ap-col{display:flex;flex-direction:column;gap:8px}
+.ap-title-large{font-weight:600}
+
+/* Tab controls: subtle border; blue only when active */
+.ap-controls button{ border:1px solid var(--background-modifier-border); border-radius:8px; padding:2px 8px; }
+.ap-controls button + button{ margin-left:6px; }
+.ap-controls button.is-active{ color:#3b82f6; font-weight:600; border-color: var(--interactive-accent); }
+
+/* Seek & Volume */
+.ap-seek{display:flex;align-items:center;gap:6px}
+.ap-seek input[type="range"]{ width:100% }
+.ap-vol-wide{display:flex;justify-content:center;align-items:center;margin:6px 0}
+.ap-vol-wide input[type="range"]{ width:60%; max-width:720px }
+
+/* Track list */
+.audio-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.audio-row{display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer}
+.audio-row:hover{background:var(--background-modifier-hover)}
+.audio-row .apl-right{margin-left:auto;opacity:0.8}
+.ap-playing-icon{font-size:12px;line-height:1;color:#3b82f6} /* blue */
+
+/* Ensure Prev/Skip/Stop never show active blue background */
+.ap-footer-seg.no-active.is-active{ background: transparent; color: var(--text-normal); }
+
+/* Force plain white icons for Prev/Skip/Stop (never blue) */
+.ap-footer-seg.plain{
+  color: var(--text-normal) !important;
+  background: transparent !important;
+}
+.ap-footer-seg.plain.is-active{
+  color: var(--text-normal) !important;
+  background: transparent !important;
+}
+
+/* Strong override to keep Prev/Skip/Stop as plain icons, never blue */
+.ap-footer-seg.plain,
+.ap-footer-seg.plain:hover,
+.ap-footer-seg.plain.is-active{
+  background: transparent !important;
+  color: var(--text-normal) !important;
+}
+
+/* --- Footer plain icons (Prev/Skip/Stop) stronger rules --- */
+.ap-footer-player .ap-footer-group .ap-footer-seg.plain,
+.ap-footer-player .ap-footer-group .ap-footer-seg.plain:hover,
+.ap-footer-player .ap-footer-group .ap-footer-seg.plain.is-active{
+  background: transparent !important;
+  color: var(--text-normal) !important;
+}
+/* Remove hover tint specifically for plain icons */
+.ap-footer-player .ap-footer-group .ap-footer-seg.plain:hover{
+  background: transparent !important;
+}
+
+/* === Tab "table" layout (1.0.13b) === */
+.audio-header, .audio-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+}
+.audio-header {
+  font-weight: 600;
+  opacity: .85;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-top: 8px;
+}
+.audio-row .cell-title,
+.audio-row .cell-artist,
+.audio-row .cell-album {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.audio-row .cell-time { text-align: right; opacity: .8; }
+.audio-row .cell-icon { width: 16px; text-align: center; }
+
+/* === 1.0.13d: subtler zebra + stronger left alignment === */
+/* Collapse icon column for non-playing rows so they sit further left - pita to get this right */
+.audio-row .cell-icon { width: 0; }
+.audio-row.is-playing .cell-icon { width: 16px; } /* keep space only for the playing row */
+
+/* Nudge left padding: tighter on non-playing, slight pad on playing */
+.audio-row { padding-left: 0; }
+.audio-row.is-playing { padding-left: 2px; }
+
+/* Very faint zebra striping to barely differentiate rows - will need to review on mobile platforms */
+.audio-list .audio-row:nth-child(even){ background: rgba(127,127,127,0.04); }
+.audio-list .audio-row:nth-child(odd){ background: transparent; }
+
+
+/* === Audio PlugList Settings spacing (dynamic playlists) === */
+.apl-settings-addwrap{ 
+  margin-bottom: 12px; 
+  padding: 10px; 
+  border: 1px dashed var(--background-modifier-border);
+  border-radius:8px;
+}
+.apl-addlabel{ font-weight:600; margin-bottom:6px; }
+.apl-playlist-divider{
+  margin: 14px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  opacity: .7;
+}
+.apl-section-break{
+  margin: 18px 0 8px 0;
+  border-top: 2px solid var(--background-modifier-border);
+}
+
+
+/* === Settings: Playlist Card - box shadow was glitchy === */
+.apl-card{
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  background: var(--background-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.apl-card .setting-item-heading{
+  margin-bottom: 6px;
+}
