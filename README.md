@@ -3,7 +3,7 @@
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-%E2%98%95-f7e600)](https://buymeacoffee.com/ragetrip)
 
 
-Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files) or a single external **link**, then control playback from a clean **tab view** and a compact **footer mini‑player** with shuffle/repeat and optional fade‑out stop.
+Playlist-based audio player. Point a playlist at a vault **folder** (auto-index audio files) or a single external **link**, then control playback from a clean **tab view** and a compact **footer mini‑player** with shuffle/repeat and optional fade‑out stop.
 
 > **Version:** 1.0.3 · **Obsidian:** 1.8.0+ · **Platforms:** Desktop & Mobile
 
