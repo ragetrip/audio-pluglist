@@ -5,8 +5,6 @@
 
 Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-index audio files) or a single external **link**, then control playback from a clean **tab view** and a compact **footer mini‑player** with shuffle/repeat and optional fade‑out stop.
 
-> **Version:** 1.0.3 · **Obsidian:** 1.8.0+ · **Platforms:** Desktop & Mobile
-
 ---
 
 ## ✨ Features
@@ -31,7 +29,7 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 ### Option A: Manual (first GitHub upload)
 1. Download the latest release assets (`main.js`, `manifest.json`, `styles.css`) from this repository.
 2. Create a folder inside your vault at:  
-   `.obsidian/plugins/audio-pluglist/`
+   `/plugins/audio-pluglist/`
 3. Copy the three files into that folder.
 4. In Vault: **Settings → Community plugins → Installed plugins → Enable “Audio PlugList”.**
 
