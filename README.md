@@ -33,7 +33,7 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 2. Create a folder inside your vault at:  
    `.obsidian/plugins/audio-pluglist/`
 3. Copy the three files into that folder.
-4. In Obsidian: **Settings → Community plugins → Installed plugins → Enable “Audio PlugList”.**
+4. In Vault: **Settings → Community plugins → Installed plugins → Enable “Audio PlugList”.**
 
 ### Option B: BRAT (before it’s in the Community store)
 If you use the **BRAT** plugin:
@@ -41,7 +41,7 @@ If you use the **BRAT** plugin:
 2. Let BRAT install and enable the plugin.
 
 ### Community Store (once approved)
-After the plugin is accepted into the Obsidian Community Plugin store, you’ll be able to install and update it directly from **Settings → Community plugins → Browse**.
+After the plugin is accepted into the Community Plugin store, you’ll be able to install and update it directly from **Settings → Community plugins → Browse**.
 
 ---
 
@@ -87,25 +87,6 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 
 ---
 
-## 🧰 Development
-
-- **Folder structure** (what Obsidian expects):
-  ```text
-  audio-pluglist/
-  ├─ main.js
-  ├─ manifest.json
-  ├─ styles.css
-  └─ versions.json   # optional, used by the Community listing
-  ```
-
-- **Manifest**: `id` must be `audio-pluglist` and the version in `manifest.json` **must match** the latest entry in `versions.json` (for Community releases). This repo sets both to **1.0.3**.
-
-- **Building**: This project currently ships a single `main.js`. If you adopt a toolchain later (TypeScript, bundler), make sure the output files match Obsidian’s expectations.
-
-- **Commands** exposed (palette): Open, Play/Pause, Next, Previous, Stop (Fade Out), Re-scan All Playlists.
-
----
-
 ## 📝 Changelog
 
 ### 1.0.3 — Initial public release
@@ -117,7 +98,7 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 ## 🤝 Contributing
 
 Bug reports and PRs are welcome. Please include:
-- Environment (OS, Obsidian version), repro steps, expected vs. actual behavior.
+- Environment (OS, version), repro steps, expected vs. actual behavior.
 - If it’s a feature request, a short mockup or user story helps.
 
 ---
@@ -133,4 +114,4 @@ This project is licensed under the **MIT License**. See [`LICENSE`](./LICENSE) f
 
 If you like this plugin and want to support development, you can [**Buy Me a Coffee**](https://buymeacoffee.com/ragetrip).  
 
-Check out my other Obsidian plugins and projects here: [**My GitHub Repositories**](https://github.com/ragetrip?tab=repositories).
+Check out my other plugins and projects here: [**My GitHub Repositories**](https://github.com/ragetrip?tab=repositories).
