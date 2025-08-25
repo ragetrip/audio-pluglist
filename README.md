@@ -10,7 +10,7 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 ## 📸 Screenshots / Audio Pluglist
 | Easy To Use |  
 | --- |  
-| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-PlaylistPlaying-sc.png) |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-PlaylistPlaying-sc.png) |  
 
 ---
 
@@ -34,21 +34,21 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 ## 📸 Screenshots / Easily Create Multiple Playlists
 | Open Menu | Add Playlist |  
 | --- | --- |  
-| ![Open Menu](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-MenuCreation-sc.png) | ![Create Playlist](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-MenuCreated-sc.png) |  
+| ![Open Menu](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-MenuCreation-sc.png) | ![Create Playlist](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-MenuCreated-sc.png) |  
 
 ---
 
 ## 📸 Screenshots / Optional Footer Mini-Player
 | Tab Mode | Footer Mini-Player |  
 | --- | --- |  
-| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-TabMode-NoMiniPlayer-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-Footer-MiniPlayer-sc.png) |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-TabMode-NoMiniPlayer-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-Footer-MiniPlayer-sc.png) |  
 
 ---
 
 ## 📸 Screenshots / Dropdown Playlists Selector
 | Tab Mode | Footer Mini-Player |  
 | --- | --- |  
-| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-TabMode-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-FooterMode-sc.png) |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-TabMode-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-FooterMode-sc.png) |  
 
 ---
 
