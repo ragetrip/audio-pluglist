@@ -7,6 +7,13 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 
 ---
 
+## 📸 Screenshots / Audio Pluglist
+| Easy To Use |  
+| --- |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-PlaylistPlaying-sc.png) |  
+
+---
+
 ## ✨ Features
 
 - **Playlists**
@@ -21,6 +28,27 @@ Multi playlist-based audio player. Point a playlist at a vault **folder** (auto-
 - **File name parser**: `Artist — Title` (em dash or hyphen) convenience.
 
 **Supported formats:** `mp3`, `wav`, `m4a`, `flac`, `ogg`, `aac`.
+
+---
+
+## 📸 Screenshots / Easily Create Multiple Playlists
+| Open Menu | Add Playlist |  
+| --- | --- |  
+| ![Open Menu](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/Audio-Pluglist-MenuCreation-sc.png) | ![Create Playlist](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-MenuCreated-sc.png) |  
+
+---
+
+## 📸 Screenshots / Optional Footer Mini-Player
+| Tab Mode | Footer Mini-Player |  
+| --- | --- |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-TabMode-NoMiniPlayer-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-Footer-MiniPlayer-sc.png) |  
+
+---
+
+## 📸 Screenshots / Dropdown Playlists Selector
+| Tab Mode | Footer Mini-Player |  
+| --- | --- |  
+| ![Tab Mode](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-TabMode-sc.png) | ![Footer Mini-Player](https://raw.githubusercontent.com/ragetrip/audio-pluglist/blob/main/repo-assets/Audio-Pluglist-FooterMode-sc.png) |  
 
 ---
 
