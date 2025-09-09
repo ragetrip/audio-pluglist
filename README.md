@@ -79,27 +79,8 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 
 ## 🔍 Known Limitations
 
-- **External linksS**: Some link playlists require **log-in**; many hosts disallow cross-origin playback.
+- **External links**: Some link playlists require **log-in**; many hosts don't allow cross-origin playback.
 - Mobile platform behavior depends on OS media policies (e.g., background playback limits).
-
----
-
-## 🧰 Development
-
-- **Folder structure** (what Obsidian expects):
-  ```text
-  audio-pluglist/
-  ├─ main.js
-  ├─ manifest.json
-  ├─ styles.css
-  └─ versions.json   # optional, used by the Community listing
-  ```
-
-- **Manifest**: `id` must be `audio-pluglist` and the version in `manifest.json` **must match** the latest entry in `versions.json` (for Community releases). This repo sets both to **1.2.5**.
-
-- **Building**: This project currently ships a single `main.js`. If you adopt a toolchain later (TypeScript, bundler), make sure the output files match Obsidian’s expectations.
-
-- **Commands** exposed (palette): Open, Play/Pause, Next, Previous, Stop (Fade Out), Re-scan All Playlists.
 
 ---
 
@@ -115,7 +96,7 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 
 Bug reports and PRs are welcome. Please include:
 - Environment (OS, Obsidian version), repro steps, expected vs. actual behavior.
-- If it’s a feature request, a short mockup or user story helps.
+- If it’s a feature request, a short mockup or example helps.
 
 ---
 
