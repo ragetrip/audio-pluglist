@@ -12,6 +12,42 @@ const { Plugin, PluginSettingTab, Setting, ItemView, TFile, TFolder, Notice } = 
 const VIEW_TYPE = 'audio-pluglist-view';
 const AUDIO_EXTS = { mp3:1, wav:1, m4a:1, flac:1, ogg:1, aac:1 };
 
+function isDirectAudioUrl(u){ return /\.(mp3|m4a|wav|ogg|flac|aac)(\?|#|$)/i.test(u); }
+function getYouTubePlaylistId(input){
+  try { const u = new URL(input); const id = u.searchParams.get("list"); if (id) return id; } catch {}
+  const m = input.match(/[?&]list=([a-zA-Z0-9_-]+)/); return m ? m[1] : null;
+}
+function ytPlaylistEmbedSrc(listId){
+  return `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(listId)}&rel=0&modestbranding=1&enablejsapi=1`;
+}
+function isSoundCloudUrl(u){ return /(^|\.)soundcloud\.com\/.+/i.test(u) || /(^|\.)on\.soundcloud\.com\//i.test(u); }
+function isSoundCloudSet(u){ return /soundcloud\.com\/[^/]+\/sets\/[^/]+/i.test(u); }
+function scEmbedSrc(u, visual=false){
+  const clean = u.split('#')[0].split('?')[0];
+  const enc = encodeURIComponent(clean);
+  const base = `https://w.soundcloud.com/player/?url=${enc}&color=%23ff5500&auto_play=false&show_teaser=true&visual=true`;
+  return base;
+}
+
+function fetchSoundCloudOEmbed(url, maxheight){
+  try {
+    const clean = url.split('#')[0].split('?')[0];
+    const endpoint = `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(clean)}${maxheight?`&maxheight=${maxheight}`:''}`;
+    return fetch(endpoint).then(r=>r.ok?r.json():null).then(j=>{
+      if (j && j.html) return j.html;
+      return null;
+    }).catch(()=>null);
+  } catch(e){ return Promise.resolve(null); }
+}
+function getSpotifyPlaylistId(input){
+  try { const u = new URL(input); const parts = u.pathname.split("/").filter(Boolean);
+    const idx = parts.indexOf("playlist"); if (idx >= 0 && parts[idx+1]) return parts[idx+1];
+  } catch {}
+  return null;
+}
+function spotifyEmbedSrc(id){ return `https://open.spotify.com/embed/playlist/${id}`; }
+
+
 function clamp(n, a, b){ if(n<a)return a; if(n>b)return b; return n; }
 function fmtTime(s) {
   s = Math.floor(s || 0);
@@ -102,7 +138,7 @@ FolderPicker.prototype.open = function(){
       (function(folderPath){
         row.onclick = function(){ self.onPick(folderPath); self.close(); };
       })(f);
-      list.appendChild(row);
+if (list) list.appendChild(row);
     }
   }
   render();
@@ -112,7 +148,7 @@ FolderPicker.prototype.close = function(){
   if (this.overlay){ this.overlay.remove(); this.overlay = null; }
 };
 
-/* Settings tab */
+// Settings tab //
 function SettingsTab(app, plugin){ PluginSettingTab.call(this, app, plugin); this.plugin = plugin; }
 SettingsTab.prototype = Object.create(PluginSettingTab.prototype);
 
@@ -123,11 +159,11 @@ SettingsTab.prototype.display = function(){
 
   var self = this;
 
-  // Add New Playlist panel
+  // Add New Playlist panel // 
   var addWrap = containerEl.createEl('div', { cls: 'apl-settings-addwrap' });
   addWrap.createEl('div', { text: 'Add New Playlist', cls: 'apl-addlabel' });
 
-  // Folder button
+  // Folder button //
   new Setting(addWrap)
     .setName('From Folder')
     .setDesc('Create a playlist that scans a vault folder')
@@ -135,19 +171,23 @@ SettingsTab.prototype.display = function(){
       b.setButtonText('Add Playlist From Folder').onClick(async ()=>{
         self.plugin.settings.playlists.push({ type:'folder', name:'', folderPath:'' });
         self.plugin.tracksByPlaylist.push([]);
+        if (!self.plugin.embedByPlaylist) self.plugin.embedByPlaylist = [];
+        self.plugin.embedByPlaylist.push(null);
         await self.plugin.saveSettings();
         self.display();
       });
     });
 
-  // Link button
+  // Link button // 
   new Setting(addWrap)
     .setName('From Link')
-    .setDesc('Create a playlist that plays a single external link')
+    .setDesc('Create a playlist from a link: YouTube playlist, SoundCloud track/set, Spotify playlist, or a direct audio URL (.mp3/.m4a/.wav/.ogg/.flac/.aac)')
     .addButton(b=>{
       b.setButtonText('Add Playlist From Link').onClick(async ()=>{
         self.plugin.settings.playlists.push({ type:'link', name:'', link:'' });
         self.plugin.tracksByPlaylist.push([]);
+        if (!self.plugin.embedByPlaylist) self.plugin.embedByPlaylist = [];
+        self.plugin.embedByPlaylist.push(null);
         await self.plugin.saveSettings();
         self.display();
       });
@@ -158,7 +198,7 @@ SettingsTab.prototype.display = function(){
     var heading = card.createEl('div', { cls: 'setting-item setting-item-heading' });
     heading.createEl('div', { text: 'Playlist ' + (idx+1) });
 
-    // Name (always)
+    // Name (always) //
     new Setting(card)
       .setName('Name')
       .addText(function(t){
@@ -179,7 +219,7 @@ SettingsTab.prototype.display = function(){
            .onChange(async (v) => { self.plugin.settings.playlists[idx].link = (v||'').trim(); await self.plugin.saveSettings(); });
         });
     } else {
-      // Default to folder type
+      // Default to folder type //
       self.plugin.settings.playlists[idx].type = 'folder';
 
       new Setting(card)
@@ -213,6 +253,7 @@ SettingsTab.prototype.display = function(){
         btn.setButtonText('Delete').onClick(async ()=>{
           self.plugin.settings.playlists.splice(idx,1);
           self.plugin.tracksByPlaylist.splice(idx,1);
+          if (self.plugin.embedByPlaylist) self.plugin.embedByPlaylist.splice(idx,1);
           if (self.plugin.currentPlaylist >= self.plugin.settings.playlists.length)
             self.plugin.currentPlaylist = self.plugin.settings.playlists.length - 1;
           await self.plugin.saveSettings();
@@ -220,16 +261,16 @@ SettingsTab.prototype.display = function(){
         });
       });
 
-    /* divider moved inside card (not needed) */
+    // divider moved inside card (not needed) //
   
 }
 
   for (var i=0;i<self.plugin.settings.playlists.length;i++) makePlaylistSection(i);
 
-  // Break line above "Re-scan all playlists"
+  // Break line above "Re-scan all playlists" //
   containerEl.createEl('div', { cls: 'apl-section-break' });
 
-  // Keep remaining settings area as-is; rebuild minimal subset
+  // Keep remaining settings area as-is for better grouping. Looks better in on smaller devices //
   new Setting(containerEl)
     .setName('Re-scan all playlists')
     .addButton(function(btn){ btn.setButtonText('Scan All').onClick(() => self.plugin.indexAll()); });
@@ -277,7 +318,7 @@ SettingsTab.prototype.display = function(){
 };
 
 
-/* Tab View */
+// Tab View //
 function View(leaf, plugin){ ItemView.call(this, leaf); this.plugin = plugin; }
 View.prototype = Object.create(ItemView.prototype);
 View.prototype.getViewType = function(){ return VIEW_TYPE; };
@@ -292,7 +333,7 @@ View.prototype.render = function(){
   var col = mk('div', 'ap-col');
   container.appendChild(col);
 
-  // Top: playlist dropdown
+  // Top: playlist dropdown //
   var rowTop = mk('div', 'ap-row');
   col.appendChild(rowTop);
   var sel = mk('select');
@@ -300,13 +341,76 @@ View.prototype.render = function(){
   fillPlaylistOptions(this.plugin, sel); if (this.plugin.currentPlaylist>=0) sel.value = String(this.plugin.currentPlaylist);
   sel.onchange = function(){ if (sel.value!=='-1') this.plugin.setCurrentPlaylist(Number(sel.value)); }.bind(this);
 
-  // Now playing title
+  // Now playing title //
   var title = mk('div', 'ap-title-large', this.plugin.currentTrackLabel());
   col.appendChild(title);
 
-  // Controls (with appended icons)
-  var controls = mk('div', 'ap-row ap-controls');
-  col.appendChild(controls);
+  // Embedded player for link-based playlists //
+  var cp = this.plugin.currentPlaylist;
+  var cfgp = (cp>=0) ? (this.plugin.settings.playlists[cp]||{}) : {};
+  var activeEmbed = (cfgp && cfgp.type==='link') ? (this.plugin.embedByPlaylist && this.plugin.embedByPlaylist[cp] || null) : null;
+  if (activeEmbed && activeEmbed.src){
+    
+    // APL_FORCE_SC_IFRAME - SoundCloud injection (track height fix) - was sensitive //
+    try{
+      if (activeEmbed && activeEmbed.provider === 'soundcloud'){
+        var _raw = (activeEmbed.original || activeEmbed.src || (cfgp && cfgp.link) || '');
+        var _clean = (_raw||'').split('#')[0].split('?')[0];
+        var _isSet = _clean.indexOf('/sets/') !== -1;
+        var targetHeight = _isSet ? 600 : 420; // ensures large UI for tracks
+
+        // Dedicated container and iframe //
+        var _wrap = mk('div','ap-embedbox');
+        var _ifr  = document.createElement('iframe');
+        _ifr.width = '100%';
+        _ifr.height = String(targetHeight);
+        _ifr.frameBorder = '0';
+        _ifr.scrolling = 'no';
+        _ifr.allow = 'autoplay; clipboard-write; encrypted-media; picture-in-picture';
+        _ifr.allowFullscreen = true;
+        _ifr.src = 'https://w.soundcloud.com/player/?visual=true&url=' + encodeURIComponent(_clean) + '&show_artwork=true';
+
+        // Insert at top of column and stop further renders //
+        col.appendChild(_wrap);
+        _wrap.appendChild(_ifr);
+        return;
+      }
+    }catch(e){}
+var wrap = mk('div','ap-embedbox');
+    var iframe = wrap.createEl('iframe', { attr: {
+      src: activeEmbed.src,
+      width: '100%',
+      height: String(activeEmbed.height||380),
+      frameborder: '0',
+      allow: 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share',
+      allowfullscreen: 'true',
+      scrolling: 'no'
+    }});
+    col.appendChild(wrap);
+    // Try oEmbed for SoundCloud - fallback to iframe
+    try {
+      if (activeEmbed && activeEmbed.provider==='soundcloud'){
+        var _src0 = (activeEmbed && (activeEmbed.original||activeEmbed.src)) || (cfgp && cfgp.link) || '';
+        fetchSoundCloudOEmbed(_src0, activeEmbed.height||450).then(function(html){
+          if (html){ wrap.innerHTML = html; }
+        });
+      }
+    } catch(e){}
+
+    try {
+      var _openSrc = (activeEmbed && (activeEmbed.original || activeEmbed.src)) || (cfgp && cfgp.link) || '';
+      var btnRow = mk('div','ap-row ap-embed-actions');
+      var btn = mk('button','ap-open-ext ap-open-ext--mini','Optional: Open In Browser');
+      btn.onclick = function(){ try{ window.open(_openSrc, '_blank'); }catch(e){} };
+      btnRow.appendChild(btn);
+      col.appendChild(btnRow);
+    } catch(e){}
+
+  }
+
+  // Controls (hidden when an external embed is active) //
+  var controls = null;
+  if (!(activeEmbed && activeEmbed.src)) { controls = mk('div', 'ap-row ap-controls'); col.appendChild(controls); }
   var prev = mk('button', '', 'Prev ◀︎◀︎'); prev.title='Previous';
   var play = mk('button', '', (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ')); play.title='Play/Pause';
   var next = mk('button', '', 'Skip ▶︎▶︎'); next.title='Next';
@@ -314,38 +418,36 @@ View.prototype.render = function(){
   var shuffle = mk('button', '', this.plugin.shuffle ? 'Shuffle (ON)' : 'Shuffle'); shuffle.title='Shuffle';
   var rptLabel = this.plugin.repeatMode === 'all' ? 'Repeat (All)' : (this.plugin.repeatMode === 'one' ? 'Repeat (One)' : 'Repeat');
   var repeatBtn = mk('button', '', rptLabel); repeatBtn.title='Repeat mode';
-  controls.appendChild(prev); controls.appendChild(play); controls.appendChild(next); controls.appendChild(stop);
-  controls.appendChild(shuffle); controls.appendChild(repeatBtn);
+  if (controls) { controls.appendChild(prev); controls.appendChild(play); controls.appendChild(next); controls.appendChild(stop); controls.appendChild(shuffle); controls.appendChild(repeatBtn); }
 
-  prev.onclick = function(){ this.plugin.prev(); }.bind(this);
-  play.onclick = function(){ this.plugin.togglePlay(); play.textContent = (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ'); }.bind(this);
-  next.onclick = function(){ this.plugin.next(); }.bind(this);
-  stop.onclick = function(){ if (this.plugin.settings.fadeOnStop) this.plugin.stopFade(this.plugin.settings.fadeMs||3000); else this.plugin.stop(); }.bind(this);
-  if (this.plugin.shuffle) shuffle.classList.add('is-active');
-  shuffle.onclick = function(){ this.plugin.toggleShuffle(); shuffle.textContent = this.plugin.shuffle ? 'Shuffle (ON)' : 'Shuffle'; shuffle.classList.toggle('is-active', this.plugin.shuffle); }.bind(this);
-  repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off');
-  repeatBtn.onclick = function(){ this.plugin.cycleRepeat(); var lbl = this.plugin.repeatMode === 'all' ? 'Repeat (All)' : (this.plugin.repeatMode === 'one' ? 'Repeat (One)' : 'Repeat'); repeatBtn.textContent = lbl; repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off'); }.bind(this);
+  if (controls) prev.onclick = function(){ this.plugin.prev(); }.bind(this);
+  if (controls) play.onclick = function(){ this.plugin.togglePlay(); play.textContent = (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ'); }.bind(this);
+  if (controls) next.onclick = function(){ this.plugin.next(); }.bind(this);
+  if (controls) stop.onclick = function(){ if (this.plugin.settings.fadeOnStop) this.plugin.stopFade(this.plugin.settings.fadeMs||3000); else this.plugin.stop(); }.bind(this);
+  if (controls && this.plugin.shuffle) shuffle.classList.add('is-active');
+  if (controls) shuffle.onclick = function(){ this.plugin.toggleShuffle(); shuffle.textContent = this.plugin.shuffle ? 'Shuffle (ON)' : 'Shuffle'; shuffle.classList.toggle('is-active', this.plugin.shuffle); }.bind(this);
+  if (controls) repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off');
+  if (controls) repeatBtn.onclick = function(){ this.plugin.cycleRepeat(); var lbl = this.plugin.repeatMode === 'all' ? 'Repeat (All)' : (this.plugin.repeatMode === 'one' ? 'Repeat (One)' : 'Repeat'); repeatBtn.textContent = lbl; repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off'); }.bind(this);
 
-  // Seek
-  var seekRow = mk('div', 'ap-row ap-seek');
-  col.appendChild(seekRow);
+  // Seek //
+  var seekRow = null;
+  if (!(activeEmbed && activeEmbed.src)) { seekRow = mk('div', 'ap-row ap-seek'); col.appendChild(seekRow); }
   var cur = mk('span', '', '0:00');
   var range = mk('input'); range.type='range'; range.min='0'; range.max='1000'; range.value='0';
   var dur = mk('span', '', '0:00');
-  seekRow.appendChild(cur); seekRow.appendChild(range); seekRow.appendChild(dur);
-  range.oninput = function(){ this.plugin.seekToFraction(Number(range.value)/1000); }.bind(this);
+  if (seekRow) { seekRow.appendChild(cur); seekRow.appendChild(range); seekRow.appendChild(dur); }
+  if (seekRow) range.oninput = function(){ this.plugin.seekToFraction(Number(range.value)/1000); }.bind(this);
 
-  // Volume (centered, wide)
-  var volRow = mk('div', 'ap-row ap-vol-wide');
-  col.appendChild(volRow);
-  volRow.appendChild(mk('span','', 'Vol'));
+  // Volume (centered, wide) //
+  var volRow = null;
+  if (!(activeEmbed && activeEmbed.src)) { volRow = mk('div', 'ap-row ap-vol-wide'); col.appendChild(volRow); if (volRow) volRow.appendChild(mk('span','', 'Vol')); }
   var vol = mk('input'); vol.type='range'; vol.min='0'; vol.max='100'; vol.value = String(Math.round(this.plugin.audio.volume*100));
-  volRow.appendChild(vol);
-  vol.oninput = function(){ this.plugin.setVolume(Number(vol.value)/100); }.bind(this);
+  if (volRow) volRow.appendChild(vol);
+  if (volRow) vol.oninput = function(){ this.plugin.setVolume(Number(vol.value)/100); }.bind(this);
 
-  // Track list (row click to play, Title — Artist, duration right, current with 🔊)
-  var list = mk('div', 'audio-list');
-  col.appendChild(list);
+  // Track list (row click to play, Title - Artist, duration right, current with 🔊 icon) //
+  var list = null;
+  if (!(activeEmbed && activeEmbed.src)) { list = mk('div', 'audio-list'); col.appendChild(list); }
 
   var showArtist = this.plugin.settings.showArtist;
   var showAlbum  = this.plugin.settings.showAlbum;
@@ -364,19 +466,19 @@ View.prototype.render = function(){
     return cols.join(' ');
   }
 
-  // Header
-  var header = mk('div','audio-header');
-  header.style.gridTemplateColumns = gridCols();
-  header.appendChild(mk('div','cell-icon',''));
-  header.appendChild(mk('div','cell-title','Title'));
-  if (showArtist) header.appendChild(mk('div','cell-artist','Artist'));
-  if (showAlbum)  header.appendChild(mk('div','cell-album','Album'));
-  header.appendChild(mk('div','cell-time','Time'));
-  list.appendChild(header);
+  // Header //
+  var header = list ? mk('div','audio-header') : null;
+  if (header) header.style.gridTemplateColumns = gridCols();
+  if (header) header.appendChild(mk('div','cell-icon',''));
+  if (header) header.appendChild(mk('div','cell-title','Title'));
+  if (header && showArtist) header.appendChild(mk('div','cell-artist','Artist'));
+  if (header && showAlbum)  header.appendChild(mk('div','cell-album','Album'));
+  if (header) { header.appendChild(mk('div','cell-time','Time')); if (list) list.appendChild(header); }
+  if (list) list.appendChild(header);
 
   var tracks = this.plugin.getTracks();
-  if (!tracks.length) list.appendChild(mk('div','', 'No audio files found for this playlist.'));
-  for (var i=0;i<tracks.length;i++){
+  if (list && !tracks.length) list.appendChild(mk('div','', 'No audio files found for this playlist.'));
+  for (var i=0;i<tracks.length;i++){ if (!list) break;
     (function(i, t, self){
       var row = mk('div', 'audio-row');
       row.style.gridTemplateColumns = gridColsFor(self.plugin.index===i);
@@ -391,7 +493,7 @@ View.prototype.render = function(){
       var right = mk('div','cell-time', t.duration!=null ? fmtTime(t.duration) : '--:--');
       row.appendChild(right);
       row.onclick = function(){ self.plugin.playIndex(i); };
-      list.appendChild(row);
+if (list) list.appendChild(row);
     })(i, tracks[i], this);
   }
 
@@ -410,7 +512,7 @@ View.prototype.render = function(){
   this.plugin.onUiRefresh = function(){ self.render(); };
 };
 
-/* Main plugin */
+// Main plugin //
 module.exports = class AudioPlugList extends Plugin {
   async onload() {
     this.settings = Object.assign({
@@ -425,17 +527,18 @@ module.exports = class AudioPlugList extends Plugin {
     }, await this.loadData());
 
     this.tracksByPlaylist = Array.from({length: this.settings.playlists.length}, ()=>[]);
+    this.embedByPlaylist = Array.from({length: this.settings.playlists.length}, ()=>null);
     this.currentPlaylist = (this.settings.playlists.length ? clamp(this.settings.currentPlaylist, 0, this.settings.playlists.length-1) : -1);
     this.queue = [];
     this.index = -1;
     this.audio = new Audio();
-    this.shuffle = true;
-    this.repeatMode = 'all'; // default 'all'
+    this.shuffle = true; // default 'true' by request //
+    this.repeatMode = 'all'; // default 'all' by request //
     this.onUiRefresh = null;
 
     this.audio.addEventListener('ended', this._onEnded.bind(this));
 
-    // Ribbon icon
+    // Ribbon icon //
     this.addRibbonIcon('music', 'Audio PlugList', () => this.activateView());
 
     this.registerView(VIEW_TYPE, (leaf) => new View(leaf, this));
@@ -477,7 +580,7 @@ module.exports = class AudioPlugList extends Plugin {
     }
   }
 
-  /* Footer */
+  // Footer //
   _attachFooter(){
     if (this.footerEl) return;
     var root = document.body.querySelector('.app-container, .mod-root') || document.body;
@@ -487,7 +590,7 @@ module.exports = class AudioPlugList extends Plugin {
     fillPlaylistOptions(this, sel); if (this.currentPlaylist>=0) sel.value = String(this.currentPlaylist);
     sel.onchange = function(){ if (sel.value!=='-1') this.setCurrentPlaylist(Number(sel.value)); }.bind(this);
 
-    // Segmented controls ⏮ | ⏯ | ⏭ | ⏹ | 🔀 | 🔁
+    // Segmented controls ⏮ | ⏯ | ⏭ | ⏹ | 🔀 | 🔁 - some of these had to be done the way that are. Switched from 1.0.3 due to mobile and device view issues so below ones are different but working. //
     var controls = el.createEl('div', { cls:'ap-footer-group' });
     var bPrev = controls.createEl('button', { cls:'ap-footer-seg no-active plain', text:'◀︎◀︎', title:'Previous' }); bPrev.onclick = ()=>this.prev();
     var bPlay = controls.createEl('button', { cls:'ap-footer-seg', text:(this.audio.paused?'▶':'Ⅱ'), title:'Play/Pause' }); bPlay.onclick = ()=>{ this.togglePlay(); bPlay.textContent = this.audio.paused ? '▶' : 'Ⅱ'; };
@@ -520,7 +623,6 @@ module.exports = class AudioPlugList extends Plugin {
     root.appendChild(el);
     this.footerEl = el;
 
-    // initialize active states
     // init active states only for shuffle/repeat
     if (this.shuffle) bShuf.classList.add('is-active');
     if (this.repeatMode !== 'off') bRpt.classList.add('is-active');
@@ -572,21 +674,61 @@ module.exports = class AudioPlugList extends Plugin {
     if (typeof this.onUiRefresh === 'function') this.onUiRefresh();
   }
 
-  /* Indexing */
+  // Indexing //
   async indexAll(){ for (var i=0;i<this.settings.playlists.length;i++) await this.indexPlaylist(i); this._applyPlaylistQueue(); }
   async indexPlaylist(i){
   var cfg = this.settings.playlists[i] || {};
-  // LINK-based playlist support
+  // LINK-based playlist support //
   if (cfg.type === 'link'){
     var link = (cfg.link||'').trim();
     var name = (cfg.name||link||('Playlist '+(i+1)));
-    if (!link){ this.tracksByPlaylist[i]=[]; new Notice('Audio PlugList: link missing for "'+name+'".'); return; }
-    var t = { id: link, path: link, title: name, meta: { artist:'', title:name, album:'' }, duration: null };
-    this.tracksByPlaylist[i] = [t];
-    this._preloadDurations(i);
+    if (!link){ this.tracksByPlaylist[i]=[]; if (this.embedByPlaylist) this.embedByPlaylist[i]=null; new Notice('Audio PlugList: link missing for \"'+name+'\".'); return; }
+
+    if (!this.embedByPlaylist) this.embedByPlaylist = Array.from({length: this.settings.playlists.length}, ()=>null);
+
+    // YouTube playlist (iframe embed) //
+    var ytid = getYouTubePlaylistId(link);
+    if (ytid){
+      this.tracksByPlaylist[i] = [];
+      this.embedByPlaylist[i]  = { provider:'youtube', src: ytPlaylistEmbedSrc(ytid), height: 380, original: link };
+      new Notice('Audio PlugList: embedded YouTube playlist.');
+      return;
+    }
+
+    // SoundCloud (track or set) //
+    if (isSoundCloudUrl(link)){
+      this.tracksByPlaylist[i] = [];
+      var _isSet = isSoundCloudSet(link);
+      this.embedByPlaylist[i]  = { provider:'soundcloud', src: scEmbedSrc(link, _isSet), height: (_isSet?600:166) };
+      new Notice('Audio PlugList: embedded SoundCloud.');
+      return;
+    }
+
+    // Spotify playlist (embed; playback may be short previews without prem) //
+    var spid = getSpotifyPlaylistId(link);
+    if (spid){
+      this.tracksByPlaylist[i] = [];
+      this.embedByPlaylist[i]  = { provider:'spotify', src: spotifyEmbedSrc(spid), height: 380, original: link };
+      new Notice('Audio PlugList: embedded Spotify playlist.');
+      return;
+    }
+
+    // Direct audio URL //
+    if (isDirectAudioUrl(link)){
+      var t = { id: link, path: link, title: name, meta: { artist:'', title:name, album:'' }, duration: null };
+      this.tracksByPlaylist[i] = [t];
+      this.embedByPlaylist[i]  = null;
+      this._preloadDurations(i);
+      return;
+    }
+
+    // Fallback: not embeddable //
+    this.tracksByPlaylist[i] = [];
+    this.embedByPlaylist[i]  = { provider:'external', src: link, height: 0, openExternally:true };
+    new Notice('Audio PlugList: link is not embeddable or a direct audio file.');
     return;
   }
-  // FOLDER-based (default)
+  // FOLDER-based (default) //
   var cfg = this.settings.playlists[i] || { folderPath:'' };
     var fp = (cfg.folderPath||'').trim();
     var root = fp ? this.app.vault.getAbstractFileByPath(fp) : this.app.vault.getRoot();
@@ -618,7 +760,7 @@ module.exports = class AudioPlugList extends Plugin {
       if (t.duration != null) return;
       var a = new Audio();
       a.preload = 'metadata';
-      a.src = self.app.vault.adapter.getResourcePath(t.path);
+      a.src = /^https?:\/\//i.test(t.path) ? t.path : self.app.vault.adapter.getResourcePath(t.path);
       a.addEventListener('loadedmetadata', function(){
         t.duration = a.duration || 0;
         if (typeof self.onUiRefresh === 'function') self.onUiRefresh();
@@ -636,12 +778,27 @@ module.exports = class AudioPlugList extends Plugin {
     return true;
   }
   playIndex(i){ if (i<0 || i>=this.queue.length) return; this.index = i; if (this.loadCurrent()) this.audio.play(); this._notifyUi(); }
-  togglePlay(){
+  
+  _activeEmbed(){
+    try {
+      var cp = this.currentPlaylist;
+      var cfg = (cp>=0) ? (this.settings.playlists[cp]||{}) : null;
+      if (!cfg || cfg.type!=='link') return null;
+      return (this.embedByPlaylist && this.embedByPlaylist[cp]) || null;
+    } catch(e){ return null; }
+  }
+togglePlay(){
+    var __em = this._activeEmbed && this._activeEmbed();
+    if (__em && __em.src){ new Notice('This playlist uses an embedded player. Use the player in the tab.'); if (this.activateView) this.activateView(); return; }
+
     if (!this.current() && this.queue.length){ this.index = 0; if (!this.loadCurrent()) return; }
     if (this.audio.paused) this.audio.play(); else this.audio.pause();
     this._notifyUi();
   }
-  stop(){ this.audio.pause(); this.audio.currentTime = 0; this._notifyUi(); }
+  stop(){
+    var __em = this._activeEmbed && this._activeEmbed();
+    if (__em && __em.src){ new Notice('This playlist uses an embedded player. Use the player in the tab.'); if (this.activateView) this.activateView(); return; }
+ this.audio.pause(); this.audio.currentTime = 0; this._notifyUi(); }
   stopFade(durationMs){
     durationMs = durationMs || 3000;
     var a = this.audio;
@@ -663,6 +820,9 @@ module.exports = class AudioPlugList extends Plugin {
     }, Math.max(10, Math.floor(durationMs/steps)));
   }
   next(){
+    var __em = this._activeEmbed && this._activeEmbed();
+    if (__em && __em.src){ new Notice('This playlist uses an embedded player. Use the player in the tab.'); if (this.activateView) this.activateView(); return; }
+
     if (this.repeatMode === 'one' && this.current()){ this.audio.currentTime = 0; this.audio.play(); this._notifyUi(); return; }
     this.index = this._pickNextIndex(this.index);
     if (this.index === -1){
@@ -673,6 +833,9 @@ module.exports = class AudioPlugList extends Plugin {
     this._notifyUi();
   }
   prev(){
+    var __em = this._activeEmbed && this._activeEmbed();
+    if (__em && __em.src){ new Notice('This playlist uses an embedded player. Use the player in the tab.'); if (this.activateView) this.activateView(); return; }
+
     if (this.index > 0) this.index--; else this.audio.currentTime = 0;
     if (this.loadCurrent()) this.audio.play();
     this._notifyUi();
@@ -705,7 +868,7 @@ module.exports = class AudioPlugList extends Plugin {
 };
 function buildLabel(plugin, t){
   var meta = t.meta || {};
-  var parts = [t.title]; // always start from the file basename
+  var parts = [t.title]; // always start from the file basename //
   if (plugin && plugin.settings){
     if (plugin.settings.showArtist && meta.artist) parts.push(meta.artist);
     if (plugin.settings.showAlbum && meta.album) parts.push(meta.album);
@@ -713,3 +876,60 @@ function buildLabel(plugin, t){
   return parts.join(' — ');
 }
 
+// APL SoundCloud guard: force widget URL + height //
+(function(){
+  var fixedFlag = 'data-apl-sc-fixed';
+  function toWidgetUrl(pageUrl){
+    try {
+      var clean = String(pageUrl||'').split('#')[0].split('?')[0];
+      return 'https://w.soundcloud.com/player/?visual=true&url=' + encodeURIComponent(clean) + '&show_artwork=true';
+    } catch(e){ return pageUrl; }
+  }
+  function fixIn(root){
+    if (!root) return;
+    var frames = root.querySelectorAll('iframe[src*="://soundcloud.com/"]:not(['+fixedFlag+'])');
+    frames.forEach(function(ifr){
+      try {
+        var w = toWidgetUrl(ifr.src);
+        if (w && w.indexOf('w.soundcloud.com/player') !== -1) {
+          ifr.setAttribute('src', w);
+        }
+        var h = parseInt(ifr.getAttribute('height') || '0', 10);
+        if (!h || h < 200) ifr.setAttribute('height', '420');
+        ifr.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture');
+        ifr.setAttribute(fixedFlag, '1');
+      } catch(_){}
+    });
+  }
+  function activeViewContent(){
+    return document.querySelector('.workspace-leaf.mod-active .view-content');
+  }
+  function kick(){
+    var vc = activeViewContent();
+    if (vc) fixIn(vc);
+  }
+  // initial nudges //
+  var count = 0;
+  var timer = setInterval(function(){
+    kick();
+    if (++count > 15) clearInterval(timer); // ~12s
+  }, 800);
+
+  // observe future DOM changes (lightweight filter) //
+  var obs = new MutationObserver(function(muts){
+    for (var i=0;i<muts.length;i++){
+      var n = muts[i].target;
+      if (!n) continue;
+      // only re-scan iframes are being added or attributes change //
+      if (muts[i].type === 'childList' || muts[i].type === 'attributes') {
+        kick();
+        break;
+      }
+    }
+  });
+  try {
+    obs.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['src','height'] });
+  } catch(_){}
+})();
+
+// I know i don't have to end with "//" but i'm slightly color blind so it helps me when my eyes are tired. //
