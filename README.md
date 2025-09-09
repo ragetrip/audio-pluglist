@@ -23,6 +23,27 @@ Playlist-based audio player for Obsidian. Point a playlist at a vault **folder**
 
 ---
 
+## 📸 PREVIEW | Easily create playlists from internal library or external link
+| Add Playlist from Library or Link | Name and Configure |
+| --- | --- |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-MenuCreated-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-MenuCreation-sc(1.2.5).png) |
+
+---
+
+## 📸 PREVIEW | Tab support, or Footer Mini-Player support (toggle mini-player on/off)
+| Tab View | Footer Only View |
+| --- | --- |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-TabMode-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-Footer-MiniPlayer-sc(1.2.5).png) |
+
+---
+
+## 📸 PREVIEW | Easy playlist access and external playlist support
+| Playlist Drop Down | External Support |
+| --- | --- |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-ExternalPlaylist-Selection-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-ExternalPlaylist-sc(1.2.5).png) |
+
+---
+
 ## 📦 Installation
 
 ### Option A: Manual (first GitHub upload)
@@ -38,7 +59,8 @@ If you use the **BRAT** plugin:
 2. Let BRAT install and enable the plugin.
 
 ### Community Store (once approved)
-After the plugin is accepted into the Obsidian Community Plugin store, you’ll be able to install and update it directly from **Settings → Community plugins → Browse**.
+After the plugin is accepted into the Obsidian Community Plugin store, you’ll be able to install and update it directly from:
+**Settings → Community plugins → Browse**.
 
 ---
 
@@ -57,7 +79,7 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 - File names like `Artist - Title.mp3` or `Artist - Title.flac` are parsed into Artist/Title automatically.
 - Turn on **Show Artist** / **Show Album** columns if you prefer richer lists.
 - Enable **Fade out on Stop** and set a custom **Fade duration (ms)** if you like gentler stops.
-- Footer mini-player will not directly control external link embed controls, but will open the playlist to the working Tab view with controls.
+- Footer mini-player will not directly control external link embeds, but will open the playlist to the working Tab view with controls.
 
 ---
 
@@ -79,8 +101,8 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 
 ## 🔍 Known Limitations
 
-- **External links**: Some link playlists require **log-in**; many hosts don't allow cross-origin playback.
-- Mobile platform behavior depends on OS media policies (e.g., background playback limits).
+- **External links**: Some linked playlists require **log-in**; some services block external playback.
+- **Mobile platforms** Behavior depends on OS media policies (e.g., background playback limits).
 
 ---
 
