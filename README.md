@@ -2,7 +2,7 @@
 
 Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (YouTube, Spotify, Deezer, SoundCloud, or External Media File), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat and optional fade-out stop.
 
-> **Version:** 1.2.5 · **Obsidian:** 1.8.0+ · **Platforms:** Desktop & Mobile
+> **Version:** 1.2.5 · **Obsidian:** 1.5.0+ · **Platforms:** Desktop & Mobile
 
 ---
 
