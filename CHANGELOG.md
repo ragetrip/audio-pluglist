@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.5 - Quality of life improvements
+## 1.2.6 - Quality of life improvements
 - Added **macOS** support. 
 - Added **Hotlink** support.
 - Added **Re-scan Playlists** & **Re-scan playlist** features to Tab & Footer views.
