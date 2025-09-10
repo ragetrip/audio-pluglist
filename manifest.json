@@ -1,9 +1,9 @@
 {
   "id": "audio-pluglist",
   "name": "Audio PlugList",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "minAppVersion": "1.5.0",
-  "description": "Create playlists from folders, files, or links (YouTube/SoundCloud/Spotify/direct audio). Tab view + footer controls.",
+  "description": "Create playlists from folders, files, or external links. Tab view + footer controls. Hotlink support",
   "author": "Ragetrip",
   "authorUrl": "https://github.com/ragetrip",
   "fundingUrl": "https://buymeacoffee.com/ragetrip",

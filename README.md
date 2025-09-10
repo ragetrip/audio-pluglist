@@ -1,8 +1,8 @@
 # Audio PlugList
 
-Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (YouTube, Spotify, Deezer, SoundCloud, or External Media File), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat and optional fade-out stop.
+Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (with multi site support), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat, optional fade-out stop, and hotkey support.
 
-> **Version:** 1.2.5 · **Obsidian:** 1.5.0+ · **Platforms:** Desktop & Mobile
+> **Version:** 1.2.6 - **Obsidian:** 1.5.0+ - **Platforms:** Desktop & Mobile
 
 ---
 
@@ -10,43 +10,45 @@ Playlist-based audio player for Obsidian. Point a playlist at a vault **folder**
 
 - **Playlists**
   - Create from a **Folder** (recursively indexes supported audio files).
-  - Create from a **Link** (direct audio URL).
+  - Create from a **Link** (external site support).
 - **Footer mini-player** with segmented controls (⏮ ⏯ ⏭ ⏹ 🔀 🔁), seek, volume, and a marquee **Now Playing** title.
 - **Tab view** showing current playlist, track list, and playback controls.
-- **Shuffle / Repeat** (Off · All · One).
+- **Shuffle / Repeat** (Off - All - One).
 - **Fade-out on Stop** with adjustable duration.
 - **Optional columns**: show Artist and/or Album in the track list.
 - **Quick re-scan**: index one playlist or **Scan All** from settings.
 - **File name parser**: `Artist - Title` (em dash or hyphen) convenience.
+- **Hotkey support** for assignable play/pause command per playlist.
+- **Browser Button** for easy access to external links if wanted or needed.
 
 **Supported formats:** `mp3`, `wav`, `m4a`, `flac`, `ogg`, `aac`.
 
 ---
 
-## 📸 PREVIEW | Easily create playlists from internal library or external link
-| Add Playlist from Library or Link | Name and Configure |
+## 📸 PREVIEW | Easily create playlists from internal library or external links
+| Library Based Playlist | External Link Based Playlist |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-MenuCreated-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-MenuCreation-sc(1.2.5).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LibraryPlaylist-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LinkPlaylist-(1.2.6).png) |
 
 ---
 
-## 📸 PREVIEW | Tab support, or Footer Mini-Player support (toggle mini-player on/off)
+## 📸 PREVIEW | Tab support, or Footer Mini-Player support (toggle mini-player on/off) with easy playlist selections
 | Tab View | Footer Only View |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-TabMode-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-Footer-MiniPlayer-sc(1.2.5).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-PlaylistSelection-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-FooterMiniPlayer-(1.2.6).png) |
 
 ---
 
-## 📸 PREVIEW | Easy playlist access and external playlist support
-| Playlist Drop Down | External Support |
+## 📸 PREVIEW | Easy menu and hotlink support
+| Settings | Hotlink Support |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-ExternalPlaylist-Selection-sc(1.2.5).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.5/Audio-Pluglist-ExternalPlaylist-sc(1.2.5).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-Settings-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-HotkeySupport-(1.2.6).png) |
 
 ---
 
 ## 📦 Installation
 
-### Option A: Manual (first GitHub upload)
+### Option A: Manual
 1. Download the latest release assets (`main.js`, `manifest.json`, `styles.css`) from this repository.
 2. Create a folder inside your vault at:  
    `.obsidian/plugins/audio-pluglist/`
@@ -90,27 +92,30 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
   - **Folder** (for folder playlists) + **Browse** + **Scan now**
   - **Link** (for link playlists)
   - **Delete playlist**
-- **Re-scan all playlists**
-- **Show Album in titles**
-- **Show Artist in titles**
-- **Show Footer mini-player**
-- **Fade out on Stop**
-- **Fade duration (ms)**
+- **Re-scan all playlists** - Index local folder playlists, re-sync external link connections. Also available on Tab and Footer Mini-Player.
+- **YouTube privacy (youtube-nocookie.com)** - Assigns privacy-enhanced domain for youtube embeds to help with Error 153 from blocked youtube links.
+- **Show Album in titles** - Based on local file data.
+- **Show Artist in titles** - Based on local file data.
+- **Show Footer mini-player** - Toggles Footer Mini-Player on/off.
+- **Fade out on Stop** - Toggle to enable/disable a user configured fade out on Stop command.
+- **Fade duration (ms)** - Adjust by ms to user preferred amount.
 
 ---
 
 ## 🔍 Known Limitations
 
-- **External links**: Some linked playlists require **log-in**; some services block external playback.
+- **External links**: Some linked playlists require **log-in**; some services block external playback. **Re-scan playlis(s)** feature added to help re-attempt broken links.
 - **Mobile platforms** Behavior depends on OS media policies (e.g., background playback limits).
 
 ---
 
 ## 📝 Changelog
 
-### 1.2.5 - Release Notes
+### 1.2.6 - Release Notes
 - First expected community release of **Audio PlugList**.
 - Dynamic playlists (Folder/Link), footer mini-player, shuffle/repeat, fade-out stop, artist/album columns, and scan tools.
+- **Hotkey support** for single command play/pause or external link call.
+- Added **FULLGUIDE.md** for detailed guide and **troubleshooting tips**.
 
 ---
 

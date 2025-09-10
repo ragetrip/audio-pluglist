@@ -47,6 +47,17 @@ function getSpotifyPlaylistId(input){
 }
 function spotifyEmbedSrc(id){ return `https://open.spotify.com/embed/playlist/${id}`; }
 
+function getDeezerPlaylistId(input){
+  try{
+    const u = new URL(input);
+    const m = u.pathname.match(/\/playlist\/(\d+)/i);
+    if (m) return m[1];
+  }catch(e){}
+  const rx = /deezer\.com\/(?:[a-z]{2}\/)?playlist\/(\d+)/i;
+  const m2 = (input||'').match(rx);
+  return m2 ? m2[1] : null;
+}
+
 
 function clamp(n, a, b){ if(n<a)return a; if(n>b)return b; return n; }
 function fmtTime(s) {
@@ -67,24 +78,17 @@ function parseArtistTitle(basename){
   if (parts.length >= 2) return { artist: parts[0], title: parts.slice(1).join(' - ') };
   return { artist: '', title: basename };
 }
-function fillPlaylistOptions(plugin, sel){
-  clearEl(sel);
-  if (!plugin.settings.playlists.length){
-    var opt = mk('option', '', 'No playlists');
-    opt.value = '-1';
-    sel.appendChild(opt);
-    sel.disabled = true;
-    return;
+function fillPlaylistOptions(self, sel){
+  sel.innerHTML='';
+  var pls = self.settings.playlists;
+  var opt0 = document.createElement('option'); opt0.value='-1'; opt0.textContent='(no playlist selected)'; sel.appendChild(opt0);
+  for (var i=0;i<pls.length;i++){
+    var cfg = pls[i]||{};
+    var name = (cfg.name||('Playlist '+(i+1)));
+    if (cfg.type==='folder') name = '📂 ' + name;
+    else if (cfg.type==='link') name = '🔗 ' + name;
+    var opt = document.createElement('option'); opt.value=String(i); opt.textContent=name; sel.appendChild(opt);
   }
-  sel.disabled = false;
-  for (var i=0;i<plugin.settings.playlists.length;i++){
-    var p = plugin.settings.playlists[i] || {};
-    var label = (p.name && p.name.length) ? p.name : ('Playlist ' + (i+1));
-    var opt = mk('option', '', label);
-    opt.value = String(i);
-    sel.appendChild(opt);
-  }
-
 }
 
 /* Simple modal folder picker */
@@ -270,10 +274,20 @@ SettingsTab.prototype.display = function(){
   // Break line above "Re-scan all playlists" //
   containerEl.createEl('div', { cls: 'apl-section-break' });
 
-  // Keep remaining settings area as-is for better grouping. Looks better in on smaller devices //
+  // Keep remaining settings area as-is for better grouping. Looks better in on smaller devices like iPad and mobile devices //
   new Setting(containerEl)
     .setName('Re-scan all playlists')
-    .addButton(function(btn){ btn.setButtonText('Scan All').onClick(() => self.plugin.indexAll()); });
+    .addButton(function(btn){ btn.setButtonText('Scan All').onClick(() => self.plugin.indexAll());
+
+
+  new Setting(containerEl)
+    .setName('YouTube privacy (youtube-nocookie.com)')
+    .setDesc('Use the privacy-enhanced domain for YouTube embeds. Helps avoid Error 153.')
+    .addToggle(t=>{
+      t.setValue(self.plugin.settings.youtubePrivacy === true)
+       .onChange(async v=>{ self.plugin.settings.youtubePrivacy = !!v; await self.plugin.saveSettings(); });
+    });
+ });
 
   new Setting(containerEl)
     .setName('Show Album in titles')
@@ -338,7 +352,13 @@ View.prototype.render = function(){
   col.appendChild(rowTop);
   var sel = mk('select');
   rowTop.appendChild(sel);
-  fillPlaylistOptions(this.plugin, sel); if (this.plugin.currentPlaylist>=0) sel.value = String(this.plugin.currentPlaylist);
+  fillPlaylistOptions(this.plugin, sel);
+  // Add refresh button next to playlist dropdown
+  var refreshBtn = mk('button','ap-refresh-btn','⟳');
+  refreshBtn.title = 'Re-scan playlists';
+  refreshBtn.onclick = function(){ try{ this.plugin.indexAll(); new Notice('Audio PlugList: Re-scanning playlists…'); }catch(e){} }.bind(this);
+  rowTop.appendChild(refreshBtn);
+ if (this.plugin.currentPlaylist>=0) sel.value = String(this.plugin.currentPlaylist);
   sel.onchange = function(){ if (sel.value!=='-1') this.plugin.setCurrentPlaylist(Number(sel.value)); }.bind(this);
 
   // Now playing title //
@@ -403,6 +423,12 @@ var wrap = mk('div','ap-embedbox');
       var btn = mk('button','ap-open-ext ap-open-ext--mini','Optional: Open In Browser');
       btn.onclick = function(){ try{ window.open(_openSrc, '_blank'); }catch(e){} };
       btnRow.appendChild(btn);
+// Add single-playlist re-scan button (mini)
+var resBtn = mk('button','ap-open-ext ap-open-ext--mini','Re-scan playlist');
+resBtn.style.marginLeft = '8px';
+resBtn.onclick = function(){ try{ var _cp = cp; this.plugin.indexPlaylist(_cp).then(()=>{ new Notice('Audio PlugList: re-scanned this playlist.'); if (this.plugin.onUiRefresh) this.plugin.onUiRefresh(); }); }catch(e){} }.bind(this);
+btnRow.appendChild(resBtn);
+
       col.appendChild(btnRow);
     } catch(e){}
 
@@ -523,7 +549,8 @@ module.exports = class AudioPlugList extends Plugin {
       showArtist: false,
       showFooter: true,
       fadeOnStop: true,
-      fadeMs: 3000
+      fadeMs: 3000,
+      youtubePrivacy: true
     }, await this.loadData());
 
     this.tracksByPlaylist = Array.from({length: this.settings.playlists.length}, ()=>[]);
@@ -532,8 +559,8 @@ module.exports = class AudioPlugList extends Plugin {
     this.queue = [];
     this.index = -1;
     this.audio = new Audio();
-    this.shuffle = true; // default 'true' by request //
-    this.repeatMode = 'all'; // default 'all' by request //
+    this.shuffle = true; // default 'true' by user request //
+    this.repeatMode = 'all'; // default 'all' by user request //
     this.onUiRefresh = null;
 
     this.audio.addEventListener('ended', this._onEnded.bind(this));
@@ -552,6 +579,9 @@ module.exports = class AudioPlugList extends Plugin {
 
     this.addSettingTab(new SettingsTab(this.app, this));
 
+    // Register per-playlist hotkeys (one command per playlist)
+    this._registerPlaylistHotkeys();
+
     if (this.settings.autoIndexOnLoad){
       const run = async ()=>{ try{ await this.indexAll(); }catch(e){} };
       if (this.app.workspace && this.app.workspace.onLayoutReady){ this.app.workspace.onLayoutReady(run); }
@@ -567,7 +597,7 @@ module.exports = class AudioPlugList extends Plugin {
     this.audio.pause(); this.audio.src = '';
   }
 
-  async saveSettings(){ await this.saveData(this.settings); }
+  async saveSettings(){ await this.saveData(this.settings); try{ this._registerPlaylistHotkeys(); }catch(e){} }
 
   async activateView(){
     var leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE);
@@ -587,7 +617,8 @@ module.exports = class AudioPlugList extends Plugin {
     var el = mk('div', 'ap-footer-player');
 
     var sel = mk('select');
-    fillPlaylistOptions(this, sel); if (this.currentPlaylist>=0) sel.value = String(this.currentPlaylist);
+    fillPlaylistOptions(this, sel);
+ if (this.currentPlaylist>=0) sel.value = String(this.currentPlaylist);
     sel.onchange = function(){ if (sel.value!=='-1') this.setCurrentPlaylist(Number(sel.value)); }.bind(this);
 
     // Segmented controls ⏮ | ⏯ | ⏭ | ⏹ | 🔀 | 🔁 - some of these had to be done the way that are. Switched from 1.0.3 due to mobile and device view issues so below ones are different but working. //
@@ -667,15 +698,72 @@ module.exports = class AudioPlugList extends Plugin {
     });
   }
 
-  setCurrentPlaylist(i){ if (!this.settings.playlists.length){ this.currentPlaylist=-1; this._applyPlaylistQueue(); if(this.onUiRefresh) this.onUiRefresh(); return; } this.currentPlaylist = clamp(i,0,this.settings.playlists.length-1);
+  setCurrentPlaylist(i){
+    if (!this.settings.playlists.length){
+      this.currentPlaylist = -1;
+      this._applyPlaylistQueue();
+      if (typeof this.onUiRefresh === 'function') this.onUiRefresh();
+      return;
+    }
+    var next = clamp(i,0,this.settings.playlists.length-1);
+    if (this.currentPlaylist !== next){
+      try{ this._stopAllPlayback(); }catch(_){ }
+    }
+    this.currentPlaylist = next;
     this.settings.currentPlaylist = this.currentPlaylist;
     this.saveSettings();
     this._applyPlaylistQueue();
     if (typeof this.onUiRefresh === 'function') this.onUiRefresh();
   }
 
+
+  
+  // Per-playlist Hotkeys //
+  togglePlaylistByIndex(i){
+    try{
+      i = Number(i);
+      if (!isFinite(i)) return;
+      if (i<0 || i >= (this.settings.playlists ? this.settings.playlists.length : 0)) return;
+      if (this.currentPlaylist !== i) this.setCurrentPlaylist(i);
+      this.togglePlay();
+    }catch(e){ try{console.error('APL togglePlaylistByIndex error', e);}catch(_){} }
+  }
+
+  _registerPlaylistHotkeys(){
+    try{
+      const cmdApi = (this.app && this.app.commands) ? this.app.commands : null;
+      const cmds = cmdApi && cmdApi.commands ? cmdApi.commands : {};
+      const pls = (this.settings && Array.isArray(this.settings.playlists)) ? this.settings.playlists : [];
+      for (let i=0;i<pls.length;i++){
+        const cfg = pls[i] || {};
+        const id = `apl-toggle-playlist-${i}`;
+        const label = `Toggle Play/Pause — ${cfg.name || ('Playlist ' + (i+1))}`;
+        if (!(cmds && cmds[id])){
+          this.addCommand({ id, name: label, callback: ()=> this.togglePlaylistByIndex(i) });
+        } else {
+          // Update name & callback in place so bindings persist //
+          try { cmds[id].name = label; } catch(_){}
+          try { cmds[id].callback = ()=> this.togglePlaylistByIndex(i); } catch(_){}
+        }
+      }
+    }catch(e){ try{console.error('APL _registerPlaylistHotkeys error', e);}catch(_){} }
+  }
+
+
   // Indexing //
-  async indexAll(){ for (var i=0;i<this.settings.playlists.length;i++) await this.indexPlaylist(i); this._applyPlaylistQueue(); }
+  
+  // Stop any active playback (internal audio + external embeds) //
+  _stopAllPlayback(){
+    try{
+      if (this.audio){ try{ this.audio.pause(); }catch(_){ } try{ this.audio.currentTime = 0; }catch(_){ } }
+      try{
+        var frames = document.querySelectorAll('.ap-embedbox iframe');
+        frames.forEach(function(fr){ try{ fr.src = 'about:blank'; }catch(_){ } });
+      }catch(_){ }
+    }catch(_){ }
+    try{ if (this.onUiRefresh) this.onUiRefresh(); }catch(_){ }
+  }
+async indexAll(){ for (var i=0;i<this.settings.playlists.length;i++) await this.indexPlaylist(i); this._applyPlaylistQueue(); }
   async indexPlaylist(i){
   var cfg = this.settings.playlists[i] || {};
   // LINK-based playlist support //
@@ -690,7 +778,7 @@ module.exports = class AudioPlugList extends Plugin {
     var ytid = getYouTubePlaylistId(link);
     if (ytid){
       this.tracksByPlaylist[i] = [];
-      this.embedByPlaylist[i]  = { provider:'youtube', src: ytPlaylistEmbedSrc(ytid), height: 380, original: link };
+      this.embedByPlaylist[i]  = { provider:'youtube', src: (self?self.plugin.settings.youtubePrivacy:this.settings.youtubePrivacy) ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(ytid)}&rel=0&modestbranding=1&enablejsapi=1` : `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(ytid)}&rel=0&modestbranding=1&enablejsapi=1`, height: 480, original: link };
       new Notice('Audio PlugList: embedded YouTube playlist.');
       return;
     }
@@ -711,6 +799,15 @@ module.exports = class AudioPlugList extends Plugin {
       this.embedByPlaylist[i]  = { provider:'spotify', src: spotifyEmbedSrc(spid), height: 380, original: link };
       new Notice('Audio PlugList: embedded Spotify playlist.');
       return;
+    // Deezer playlist (no iframe embed; open externally due to login overlay) //
+    var dzid = getDeezerPlaylistId(link);
+    if (dzid){
+      this.tracksByPlaylist[i] = []; // avoid trying to parse tracks here
+      this.embedByPlaylist[i]  = null; // no embed; rely on action row buttons
+      try { new Notice('Deezer playlist detected. Use "Open In Browser" to play.'); } catch(e) {}
+      return;
+    }
+
     }
 
     // Direct audio URL //

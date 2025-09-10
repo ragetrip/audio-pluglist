@@ -11,7 +11,7 @@
   border-top:1px solid var(--background-modifier-border);
   background:var(--background-primary);
   z-index:1000;
-  width:50vw;
+  width:52vw;
 }
 .ap-footer-player select{ font-size:12px }
 .ap-footer-player .ap-title{ position:relative; overflow:hidden; white-space:nowrap; width:26ch; max-width:26ch; }
@@ -198,7 +198,7 @@
 .ap-diag-panel { margin-top: 6px; padding: 6px; border: 1px dashed var(--background-modifier-border); border-radius: 6px; font-size: 0.85em; }
 .ap-diag-line { margin: 2px 0; word-break: break-all; }
 
-.ap-embedbox{min-height:180px}
+.ap-embedbox{height:205px} /* set at 205px for youtube tracklist so you can see track2 to skip in case of error 153 */
 .ap-embedbox iframe{display:block;width:100%;height:100%}
 
 /* Make repeat pill match shuffle pill */
@@ -222,8 +222,32 @@
   height: 14px;
 }
 
-/* APL footer: Better alignment for the repeat button that carries over to smaller hardware/devices */
+/* APL footer: Used for smaller hardware/devices */
 .ap-footer-player .ap-footer-group button[title^="Repeat"] {
   padding-left: 4px !important;
-  padding-right: 16px !important;
+  padding-right: 10px !important;
+}
+
+/* small refresh button next to playlist dropdowns */
+.ap-refresh-btn{
+  margin-left: 8px;
+  padding: 2px 8px;
+  height: 24px;
+  line-height: 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+  cursor: pointer;
+}
+.ap-refresh-btn:hover{ background: var(--background-modifier-hover); }
+
+
+/* Balance shuffle/repeat pill widths */
+.ap-shuffle button, .ap-shuffle {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+.ap-repeat button, .ap-repeat {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
 }
