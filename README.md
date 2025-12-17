@@ -29,21 +29,21 @@ Playlist-based audio player for Obsidian. Point a playlist at a vault **folder**
 ## 📸 PREVIEW | Easily create playlists from internal library or external links
 | Library Based Playlist | External Link Based Playlist |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LibraryPlaylist-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LinkPlaylist-(1.2.6).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.3.2/Audio-Pluglist-LibraryPlaylist-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LinkPlaylist-(1.2.6).png) |
 
 ---
 
 ## 📸 PREVIEW | Tab support, or Footer Mini-Player support (toggle mini-player on/off) with easy playlist selections
 | Tab View | Footer Only View |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-PlaylistSelection-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-FooterMiniPlayer-(1.3.2).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-PlaylistSelection-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.3.2/Audio-Pluglist-FooterMiniPlayer-(1.3.2).png) |
 
 ---
 
 ## 📸 PREVIEW | Easy menu with hotlink & EQ support
 | Settings | Hotlink Support |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-Settings-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-HotkeySupport-(1.2.6).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.3.2/Audio-Pluglist-Settings-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-HotkeySupport-(1.2.6).png) |
 
 ---
 
