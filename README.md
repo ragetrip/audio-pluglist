@@ -1,8 +1,8 @@
 # Audio PlugList
 
-Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (with multi site support), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat, optional fade-out stop, and hotkey support.
+Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (with multi site support), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat, optional fade-out stop, EQ presets, and hotkey support.
 
-> **Version:** 1.2.6 - **Obsidian:** 1.5.0+ - **Platforms:** Desktop & Mobile
+> **Version:** 1.3.2 - **Obsidian:** 1.5.0+ - **Platforms:** Desktop & Mobile
 
 ---
 
@@ -19,6 +19,7 @@ Playlist-based audio player for Obsidian. Point a playlist at a vault **folder**
 - **Quick re-scan**: index one playlist or **Scan All** from settings.
 - **File name parser**: `Artist - Title` (em dash or hyphen) convenience.
 - **Hotkey support** for assignable play/pause command per playlist.
+- **EQ support** with bypass option and 3 editable presets.
 - **Browser Button** for easy access to external links if wanted or needed.
 
 **Supported formats:** `mp3`, `wav`, `m4a`, `flac`, `ogg`, `aac`.
@@ -28,21 +29,21 @@ Playlist-based audio player for Obsidian. Point a playlist at a vault **folder**
 ## 📸 PREVIEW | Easily create playlists from internal library or external links
 | Library Based Playlist | External Link Based Playlist |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LibraryPlaylist-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LinkPlaylist-(1.2.6).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LibraryPlaylist-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-LinkPlaylist-(1.2.6).png) |
 
 ---
 
 ## 📸 PREVIEW | Tab support, or Footer Mini-Player support (toggle mini-player on/off) with easy playlist selections
 | Tab View | Footer Only View |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-PlaylistSelection-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-FooterMiniPlayer-(1.2.6).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-PlaylistSelection-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-FooterMiniPlayer-(1.3.2).png) |
 
 ---
 
-## 📸 PREVIEW | Easy menu and hotlink support
+## 📸 PREVIEW | Easy menu with hotlink & EQ support
 | Settings | Hotlink Support |
 | --- | --- |
-| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-Settings-(1.2.6).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-HotkeySupport-(1.2.6).png) |
+| ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-Settings-(1.3.2).png) | ![Settings](https://raw.githubusercontent.com/ragetrip/audio-pluglist/main/repo-assets/1.2.6/Audio-Pluglist-HotkeySupport-(1.2.6).png) |
 
 ---
 
@@ -92,6 +93,10 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
   - **Folder** (for folder playlists) + **Browse** + **Scan now**
   - **Link** (for link playlists)
   - **Delete playlist**
+- **Custom Equilizer Settings**
+    - **Active Preset** (current default EQ)
+    - **EQ Table** (current editable presets)
+        - **NOTE:** (10 comma separated numbers w/Reset button to revert back to default) 
 - **Re-scan all playlists** - Index local folder playlists, re-sync external link connections. Also available on Tab and Footer Mini-Player.
 - **YouTube privacy (youtube-nocookie.com)** - Assigns privacy-enhanced domain for youtube embeds to help with Error 153 from blocked youtube links.
 - **Show Album in titles** - Based on local file data.
@@ -116,6 +121,15 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 - Dynamic playlists (Folder/Link), footer mini-player, shuffle/repeat, fade-out stop, artist/album columns, and scan tools.
 - **Hotkey support** for single command play/pause or external link call.
 - Added **FULLGUIDE.md** for detailed guide and **troubleshooting tips**.
+
+### 1.3.2 - Release Notes
+- Edits to comply with **Community Plugin** submission standards.
+- Added **EQ** support for folder based playlists. Includes multiple presets plus a bypass option.
+- Updated **Ribbon/Tab Icon**.
+- Various bug cleanup.
+    - Dynamic title lock-up addressed.
+    - Footer player not updating current playlist on tab change addressed.
+    - Icon and pill adjustments for tablet users.
 
 ---
 

@@ -83,6 +83,38 @@ It's very easy without the guild but full details are below if needed.
 
 ---
 
+## Equalizer (EQ)
+
+Audio PlugList includes a built-in **10-band equalizer** designed for **folder-based playlists** played through the plugin’s internal audio player. The EQ is intentionally lightweight, menu-driven, and persistent across sessions.
+
+> Note: The EQ does **not** affect link-based or embedded playlists (YouTube, SoundCloud, Spotify, etc.), as those are rendered via provider iframes and cannot be processed locally.
+
+### EQ Presets
+
+The EQ supports multiple presets plus a bypass option:
+
+- **None** — EQ disabled (no processing)
+- **Preset 0 – Default** — Flat response (all bands at 0 dB)
+- **Preset 1 – Warm** — Gentle low-end and low-mid emphasis
+- **Preset 2 – Bright** — Increased clarity and presence
+- **Preset 3 – V-Curve** — Boosted lows/highs with reduced mids
+
+All presets are fully editable.
+
+### Editing EQ Settings
+
+EQ settings are managed from **Settings → Audio PlugList → Custom Equalizer Settings**.  
+Each preset uses **10 comma-separated gain values** corresponding to the following frequency bands:
+
+`32, 62, 128, 250, 500, 1000, 2000, 4000, 8000, 16000 Hz`
+
+Positive values boost, negative values cut. A preview graph displays the current EQ curve, and each preset includes a **Reset** button to restore its defaults.
+
+### EQ Toggle Button
+
+An **EQ toggle button** appears to the right of **Repeat** in both the **Tab view** and the **Footer mini-player**. Clicking the button cycles through presets in order, while hovering shows the currently active preset. This allows quick EQ switching without opening the Settings panel.
+
+
 ## Known Limitations (Embeds)
 
 - **Autoplay & control** for 🔗 link playlists depend on the provider:

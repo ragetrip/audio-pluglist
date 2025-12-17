@@ -222,12 +222,6 @@
   height: 14px;
 }
 
-/* APL footer: Used for smaller hardware/devices */
-.ap-footer-player .ap-footer-group button[title^="Repeat"] {
-  padding-left: 4px !important;
-  padding-right: 10px !important;
-}
-
 /* small refresh button next to playlist dropdowns */
 .ap-refresh-btn{
   margin-left: 8px;
@@ -251,3 +245,95 @@
   padding-left: 6px !important;
   padding-right: 6px !important;
 }
+
+/* === Audio PlugList EQ Styles (namespaced) === */
+.apl-eq-card{
+  border:1px solid var(--background-modifier-border);
+  border-radius:10px;
+  padding:14px;
+  margin:16px 0 6px;
+  background: var(--background-primary);
+}
+.apl-eq-title{ font-size:1.05rem; font-weight:600; margin-bottom:2px; }
+.apl-eq-sub{ font-size:0.8rem; opacity:0.75; margin:8px 0 12px; }
+.apl-eq-row{
+  display:grid;
+  grid-template-columns:160px 200px 1fr auto;
+  gap:12px;
+  align-items:center;
+  margin:10px 0;
+}
+.apl-eq-label{ font-size:0.85rem; font-weight:600; }
+.apl-eq-graph{
+  width:200px;
+  height:50px;
+  border:1px solid var(--background-modifier-border);
+  border-radius:6px;
+  background: var(--background-secondary);
+}
+.apl-eq-input{
+  width:100%;
+  padding:6px 8px;
+  font-size:0.85rem;
+}
+.apl-eq-reset{
+  padding:6px 10px;
+  font-size:0.85rem;
+}
+
+
+/* === APL modal (moved from JS inline styles for theme compatibility) === */
+.apl-modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.apl-modal{
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  min-width: 420px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+.apl-modal-head{
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.apl-modal-search{
+  flex: 1;
+  margin-left: 8px;
+}
+.apl-modal-body{
+  padding: 8px 12px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.apl-modal-footer{
+  padding: 10px 12px;
+  border-top: 1px solid var(--background-modifier-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.apl-modal-row{
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.apl-modal-row:hover{
+  background: var(--background-modifier-hover);
+}
+
+/* Mini rescan button spacing (moved from JS inline style) */
+.ap-open-ext--mini{ margin-left: 8px; }

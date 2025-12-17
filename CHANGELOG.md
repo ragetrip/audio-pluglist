@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2 - Community Submission Edits & EQ Feature
+- Added **EQ** with default and 3 preset that can be edited.
+- Cleaned up main.js and styles.css to **Community Submission** standard.
+- Updated ribbon and tab **icons**.
+
+
 ## 1.2.6 - Quality of life improvements
 - Added **macOS** support. 
 - Added **Hotlink** support.

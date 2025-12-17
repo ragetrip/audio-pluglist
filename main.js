@@ -7,8 +7,7 @@ NOTE: If this was helpful to you, please feel free to visit https://buymeacoffee
 Anything is appreciated and motivates to continue creating more useful plugins for the community.
 Thank you - Enjoy */
 
-const { Plugin, PluginSettingTab, Setting, ItemView, TFile, TFolder, Notice } = require('obsidian');
-
+const { Plugin, PluginSettingTab, Setting, ItemView, TFile, TFolder, Notice, normalizePath } = require('obsidian');
 const VIEW_TYPE = 'audio-pluglist-view';
 const AUDIO_EXTS = { mp3:1, wav:1, m4a:1, flac:1, ogg:1, aac:1 };
 
@@ -79,7 +78,7 @@ function parseArtistTitle(basename){
   return { artist: '', title: basename };
 }
 function fillPlaylistOptions(self, sel){
-  sel.innerHTML='';
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
   var pls = self.settings.playlists;
   var opt0 = document.createElement('option'); opt0.value='-1'; opt0.textContent='(no playlist selected)'; sel.appendChild(opt0);
   for (var i=0;i<pls.length;i++){
@@ -96,22 +95,18 @@ function FolderPicker(app, onPick){
   this.app = app; this.onPick = onPick; this.overlay = null;
 }
 FolderPicker.prototype.open = function(){
-  var overlay = mk('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;display:flex;align-items:center;justify-content:center;';
-  var modal = mk('div');
-  modal.style.cssText = 'background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;min-width:420px;max-height:70vh;display:flex;flex-direction:column;';
+  var overlay = mk('div','apl-modal-overlay');
+  var modal = mk('div','apl-modal');
   overlay.appendChild(modal);
 
-  var head = mk('div');
-  head.style.cssText='padding:10px 12px;border-bottom:1px solid var(--background-modifier-border);display:flex;gap:8px;align-items:center;';
+  var head = mk('div','apl-modal-head');
   head.appendChild(mk('b', '', 'Select a folder'));
-  var search = mk('input'); search.type='search'; search.placeholder='Filter folders...'; search.style.cssText='flex:1;margin-left:8px;';
-  head.appendChild(search);
+  var search = mk('input','apl-modal-search'); search.type='search'; search.placeholder='Filter folders...'; head.appendChild(search);
 
-  var body = mk('div'); body.style.cssText='padding:8px 12px;overflow:auto;display:flex;flex-direction:column;gap:6px;';
+  var body = mk('div','apl-modal-body');
   var list = mk('div');
 
-  var footer = mk('div'); footer.style.cssText='padding:10px 12px;border-top:1px solid var(--background-modifier-border);display:flex;gap:8px;justify-content:flex-end;';
+  var footer = mk('div','apl-modal-footer');
   var cancel = mk('button', '', 'Cancel'); cancel.onclick = this.close.bind(this);
   footer.appendChild(cancel);
 
@@ -137,8 +132,6 @@ FolderPicker.prototype.open = function(){
       if (f.toLowerCase().indexOf(q) === -1) continue;
       var row = mk('div','', f || '/');
       row.style.cssText = 'padding:6px 8px;border-radius:6px;cursor:pointer;';
-      row.onmouseenter = function(){ this.style.background = 'var(--background-modifier-hover)'; };
-      row.onmouseleave = function(){ this.style.background = 'transparent'; };
       (function(folderPath){
         row.onclick = function(){ self.onPick(folderPath); self.close(); };
       })(f);
@@ -159,20 +152,18 @@ SettingsTab.prototype = Object.create(PluginSettingTab.prototype);
 SettingsTab.prototype.display = function(){
   var containerEl = this.containerEl;
   containerEl.empty();
-  containerEl.createEl('h2', { text: 'Audio PlugList' });
-
   var self = this;
 
   // Add New Playlist panel // 
   var addWrap = containerEl.createEl('div', { cls: 'apl-settings-addwrap' });
-  addWrap.createEl('div', { text: 'Add New Playlist', cls: 'apl-addlabel' });
+  addWrap.createEl('div', { text: 'Add new playlist', cls: 'apl-addlabel' });
 
   // Folder button //
   new Setting(addWrap)
-    .setName('From Folder')
+    .setName('From folder')
     .setDesc('Create a playlist that scans a vault folder')
     .addButton(b=>{
-      b.setButtonText('Add Playlist From Folder').onClick(async ()=>{
+      b.setButtonText('Add playlist from folder').onClick(async ()=>{
         self.plugin.settings.playlists.push({ type:'folder', name:'', folderPath:'' });
         self.plugin.tracksByPlaylist.push([]);
         if (!self.plugin.embedByPlaylist) self.plugin.embedByPlaylist = [];
@@ -184,10 +175,10 @@ SettingsTab.prototype.display = function(){
 
   // Link button // 
   new Setting(addWrap)
-    .setName('From Link')
+    .setName('From link')
     .setDesc('Create a playlist from a link: YouTube playlist, SoundCloud track/set, Spotify playlist, or a direct audio URL (.mp3/.m4a/.wav/.ogg/.flac/.aac)')
     .addButton(b=>{
-      b.setButtonText('Add Playlist From Link').onClick(async ()=>{
+      b.setButtonText('Add playlist from link').onClick(async ()=>{
         self.plugin.settings.playlists.push({ type:'link', name:'', link:'' });
         self.plugin.tracksByPlaylist.push([]);
         if (!self.plugin.embedByPlaylist) self.plugin.embedByPlaylist = [];
@@ -232,7 +223,7 @@ SettingsTab.prototype.display = function(){
         .addText(function(t){
           t.setPlaceholder('Browse to select...')
            .setValue((cfg.folderPath||''))
-           .onChange(async (v) => { self.plugin.settings.playlists[idx].folderPath = (v||'').trim(); await self.plugin.saveSettings(); });
+           .onChange(async (v) => { self.plugin.settings.playlists[idx].folderPath = normalizePath((v||'').trim()); await self.plugin.saveSettings(); });
         })
         .addButton(function(btn){
           btn.setButtonText('Browse').onClick(async () => {
@@ -270,6 +261,92 @@ SettingsTab.prototype.display = function(){
 }
 
   for (var i=0;i<self.plugin.settings.playlists.length;i++) makePlaylistSection(i);
+
+
+
+// ====== Equalizer Settings ====== //
+(function(){
+  try{
+    var eqCard = containerEl.createEl('div', { cls: 'apl-eq-card' });
+    eqCard.createEl('div', { text: 'Custom Equalizer Settings', cls: 'apl-eq-title' });
+
+    // Active preset dropdown (inside card at top) //
+    new Setting(eqCard)
+      .setName('Active Preset')
+      .setDesc('Select which preset is applied to local audio playback (folder tracks / direct audio URLs). Embedded players cannot be EQ’d.')
+      .addDropdown(function(drop){
+        drop.addOption('none','None');
+        drop.addOption('0','Preset 0 — Default (Flat)');
+        drop.addOption('1','Preset 1 — Warm');
+        drop.addOption('2','Preset 2 — Bright');
+        drop.addOption('3','Preset 3 — V-Curve');
+        drop.setValue(String(self.plugin.settings.activeEQ ?? 'none'));
+        drop.onChange(async function(v){
+          self.plugin.settings.activeEQ = (v === 'none') ? 'none' : Number(v);
+          await self.plugin.saveSettings();
+          try{ self.plugin._aplApplyEQ(); }catch(e){}
+        });
+      });
+
+    eqCard.createEl('div', { text: 'Enter 10 comma-separated numbers (dB) for bands: 32, 62, 128, 250, 500, 1k, 2k, 4k, 8k, 16k Hz.', cls: 'apl-eq-sub' });
+
+    function parsePreset(str){
+      var nums = (str||'').split(',').map(function(s){ return Number(String(s).trim()); });
+      if (nums.length !== 10) return null;
+      for (var i=0;i<nums.length;i++){ if (!isFinite(nums[i])) return null; }
+      return nums;
+    }
+
+    function makePresetRow(p){
+      var row = eqCard.createEl('div', { cls:'apl-eq-row' });
+      row.createEl('div', { text: 'EQ-' + p + ' gains (dB)', cls:'apl-eq-label' });
+
+      var canvas = row.createEl('canvas', { cls:'apl-eq-graph' });
+      canvas.width = 200; canvas.height = 50;
+
+      var presetArr = (self.plugin.settings.eqPresets && self.plugin.settings.eqPresets[p]) ? self.plugin.settings.eqPresets[p] : [0,0,0,0,0,0,0,0,0,0];
+      try{ self.plugin._aplDrawEQGraph(canvas, presetArr); }catch(e){}
+
+      var input = row.createEl('input', { cls:'apl-eq-input', attr:{ value: presetArr.join(', ') } });
+
+      input.addEventListener('change', async function(){
+        var parsed = parsePreset(input.value);
+        if (!parsed){
+          new Notice('Invalid EQ preset. Must be 10 numbers, comma-separated.');
+          input.value = presetArr.join(', ');
+          return;
+        }
+        self.plugin.settings.eqPresets[p] = parsed;
+        await self.plugin.saveSettings();
+        presetArr = parsed;
+        try{ self.plugin._aplDrawEQGraph(canvas, presetArr); }catch(e){}
+        try{ self.plugin._aplApplyEQ(); }catch(e){}
+      });
+
+      var resetBtn = row.createEl('button', { cls:'apl-eq-reset' });
+      resetBtn.textContent = 'Reset';
+      resetBtn.onclick = async function(){
+        // Reset Preset 0 to flat; others to built-in defaults //
+        var defaults = [
+          [0,0,0,0,0,0,0,0,0,0],
+          [3,2.5,1.5,0.5,0,-0.5,0,0.5,1,1.5],
+          [0,0.5,1,1.5,3,3.5,4,3.5,2,1.5],
+          [3,2.5,2,0.5,-1.5,-2,-0.5,1.5,2.5,2]
+        ];
+        self.plugin.settings.eqPresets[p] = defaults[p].slice();
+        await self.plugin.saveSettings();
+        presetArr = self.plugin.settings.eqPresets[p];
+        input.value = presetArr.join(', ');
+        try{ self.plugin._aplDrawEQGraph(canvas, presetArr); }catch(e){}
+        try{ self.plugin._aplApplyEQ(); }catch(e){}
+      };
+    }
+
+    // Render Presets 0-3 //
+    for (var p=0;p<4;p++) makePresetRow(p);
+
+  }catch(e){ try{ console.error('APL EQ settings UI failed', e); }catch(_){ } }
+})();
 
   // Break line above "Re-scan all playlists" //
   containerEl.createEl('div', { cls: 'apl-section-break' });
@@ -337,7 +414,7 @@ function View(leaf, plugin){ ItemView.call(this, leaf); this.plugin = plugin; }
 View.prototype = Object.create(ItemView.prototype);
 View.prototype.getViewType = function(){ return VIEW_TYPE; };
 View.prototype.getDisplayText = function(){ return 'Audio PlugList'; };
-View.prototype.getIcon = function(){ return 'music'; };
+View.prototype.getIcon = function(){ return 'cassette-tape'; };
 View.prototype.onOpen = async function(){ this.render(); };
 View.prototype.onClose = async function(){};
 View.prototype.render = function(){
@@ -353,7 +430,7 @@ View.prototype.render = function(){
   var sel = mk('select');
   rowTop.appendChild(sel);
   fillPlaylistOptions(this.plugin, sel);
-  // Add refresh button next to playlist dropdown
+  // Add refresh button next to playlist dropdown //
   var refreshBtn = mk('button','ap-refresh-btn','⟳');
   refreshBtn.title = 'Re-scan playlists';
   refreshBtn.onclick = function(){ try{ this.plugin.indexAll(); new Notice('Audio PlugList: Re-scanning playlists…'); }catch(e){} }.bind(this);
@@ -377,7 +454,7 @@ View.prototype.render = function(){
         var _raw = (activeEmbed.original || activeEmbed.src || (cfgp && cfgp.link) || '');
         var _clean = (_raw||'').split('#')[0].split('?')[0];
         var _isSet = _clean.indexOf('/sets/') !== -1;
-        var targetHeight = _isSet ? 600 : 420; // ensures large UI for tracks
+        var targetHeight = _isSet ? 600 : 420; // ensures large UI for tracks //
 
         // Dedicated container and iframe //
         var _wrap = mk('div','ap-embedbox');
@@ -412,7 +489,17 @@ var wrap = mk('div','ap-embedbox');
       if (activeEmbed && activeEmbed.provider==='soundcloud'){
         var _src0 = (activeEmbed && (activeEmbed.original||activeEmbed.src)) || (cfgp && cfgp.link) || '';
         fetchSoundCloudOEmbed(_src0, activeEmbed.height||450).then(function(html){
-          if (html){ wrap.innerHTML = html; }
+          if (html){
+            while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+            try {
+              var doc = new DOMParser().parseFromString(html, 'text/html');
+              var body = doc && doc.body;
+              if (body){
+                Array.from(body.childNodes).forEach(function(n){ wrap.appendChild(n); });
+              }
+            } catch(_e){
+            }
+          }
         });
       }
     } catch(e){}
@@ -425,7 +512,6 @@ var wrap = mk('div','ap-embedbox');
       btnRow.appendChild(btn);
 // Add single-playlist re-scan button (mini)
 var resBtn = mk('button','ap-open-ext ap-open-ext--mini','Re-scan playlist');
-resBtn.style.marginLeft = '8px';
 resBtn.onclick = function(){ try{ var _cp = cp; this.plugin.indexPlaylist(_cp).then(()=>{ new Notice('Audio PlugList: re-scanned this playlist.'); if (this.plugin.onUiRefresh) this.plugin.onUiRefresh(); }); }catch(e){} }.bind(this);
 btnRow.appendChild(resBtn);
 
@@ -437,14 +523,15 @@ btnRow.appendChild(resBtn);
   // Controls (hidden when an external embed is active) //
   var controls = null;
   if (!(activeEmbed && activeEmbed.src)) { controls = mk('div', 'ap-row ap-controls'); col.appendChild(controls); }
-  var prev = mk('button', '', 'Prev ◀︎◀︎'); prev.title='Previous';
-  var play = mk('button', '', (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ')); play.title='Play/Pause';
-  var next = mk('button', '', 'Skip ▶︎▶︎'); next.title='Next';
+  var prev = mk('button', '', 'Prev ◀︎◀︎'); prev.title='Previous track';
+  var play = mk('button', '', (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ')); play.title='Play/pause';
+  var next = mk('button', '', 'Skip ▶︎▶︎'); next.title='Next track';
   var stop = mk('button', '', 'Stop ■'); stop.title='Stop (fade)';
   var shuffle = mk('button', '', this.plugin.shuffle ? 'Shuffle (ON)' : 'Shuffle'); shuffle.title='Shuffle';
   var rptLabel = this.plugin.repeatMode === 'all' ? 'Repeat (All)' : (this.plugin.repeatMode === 'one' ? 'Repeat (One)' : 'Repeat');
   var repeatBtn = mk('button', '', rptLabel); repeatBtn.title='Repeat mode';
-  if (controls) { controls.appendChild(prev); controls.appendChild(play); controls.appendChild(next); controls.appendChild(stop); controls.appendChild(shuffle); controls.appendChild(repeatBtn); }
+  var eqBtn = mk('button', '', 'EQ'); eqBtn.title='Equalizer preset (click to cycle)';
+  if (controls) { controls.appendChild(prev); controls.appendChild(play); controls.appendChild(next); controls.appendChild(stop); controls.appendChild(shuffle); controls.appendChild(repeatBtn); controls.appendChild(eqBtn); }
 
   if (controls) prev.onclick = function(){ this.plugin.prev(); }.bind(this);
   if (controls) play.onclick = function(){ this.plugin.togglePlay(); play.textContent = (this.plugin.audio.paused ? 'Play ▶︎' : 'Pause Ⅱ'); }.bind(this);
@@ -454,6 +541,15 @@ btnRow.appendChild(resBtn);
   if (controls) shuffle.onclick = function(){ this.plugin.toggleShuffle(); shuffle.textContent = this.plugin.shuffle ? 'Shuffle (ON)' : 'Shuffle'; shuffle.classList.toggle('is-active', this.plugin.shuffle); }.bind(this);
   if (controls) repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off');
   if (controls) repeatBtn.onclick = function(){ this.plugin.cycleRepeat(); var lbl = this.plugin.repeatMode === 'all' ? 'Repeat (All)' : (this.plugin.repeatMode === 'one' ? 'Repeat (One)' : 'Repeat'); repeatBtn.textContent = lbl; repeatBtn.classList.toggle('is-active', this.plugin.repeatMode !== 'off'); }.bind(this);
+
+  // EQ preset cycle button //
+  if (controls) {
+    try{ this.plugin._aplSyncEqButtonState(eqBtn); }catch(_){}
+    eqBtn.onclick = function(){
+      try{ this.plugin._aplCycleEqPreset(); }catch(_){}
+      try{ this.plugin._aplSyncEqButtonState(eqBtn); }catch(_){}
+    }.bind(this);
+  }
 
   // Seek //
   var seekRow = null;
@@ -550,7 +646,15 @@ module.exports = class AudioPlugList extends Plugin {
       showFooter: true,
       fadeOnStop: true,
       fadeMs: 3000,
-      youtubePrivacy: true
+      youtubePrivacy: true,
+eqBands: [32,62,128,250,500,1000,2000,4000,8000,16000],
+eqPresets: [
+  [0,0,0,0,0,0,0,0,0,0],                                // Preset 0 — Default (Flat)
+  [3,2.5,1.5,0.5,0,-0.5,0,0.5,1,1.5],                    // Preset 1 — Warm
+  [0,0.5,1,1.5,3,3.5,4,3.5,2,1.5],                       // Preset 2 — Bright
+  [3,2.5,2,0.5,-1.5,-2,-0.5,1.5,2.5,2]                   // Preset 3 — V-Curve
+],
+activeEQ: "none",
     }, await this.loadData());
 
     this.tracksByPlaylist = Array.from({length: this.settings.playlists.length}, ()=>[]);
@@ -559,6 +663,9 @@ module.exports = class AudioPlugList extends Plugin {
     this.queue = [];
     this.index = -1;
     this.audio = new Audio();
+// Equalizer (menu-only; applies to local audio playback only) //
+this._aplEq = { ctx: null, source: null, filters: null };
+try { this._aplInitEQ(this.audio); } catch(e) { try{console.error('APL EQ init failed', e);}catch(_){} }
     this.shuffle = true; // default 'true' by user request //
     this.repeatMode = 'all'; // default 'all' by user request //
     this.onUiRefresh = null;
@@ -566,20 +673,20 @@ module.exports = class AudioPlugList extends Plugin {
     this.audio.addEventListener('ended', this._onEnded.bind(this));
 
     // Ribbon icon //
-    this.addRibbonIcon('music', 'Audio PlugList', () => this.activateView());
+    this.addRibbonIcon('cassette-tape', 'Audio PlugList', () => this.activateView());
 
     this.registerView(VIEW_TYPE, (leaf) => new View(leaf, this));
 
     this.addCommand({ id:'apl-open', name:'Open Audio PlugList', callback: () => this.activateView() });
-    this.addCommand({ id:'apl-play-pause', name:'Play/Pause', callback: () => this.togglePlay() });
-    this.addCommand({ id:'apl-next', name:'Next Track', callback: () => this.next() });
-    this.addCommand({ id:'apl-prev', name:'Previous Track', callback: () => this.prev() });
-    this.addCommand({ id:'apl-stop', name:'Stop (Fade Out)', callback: () => this.stopFade(3000) });
-    this.addCommand({ id:'apl-rescan-all', name:'Re-scan All Playlists', callback: () => this.indexAll() });
+    this.addCommand({ id:'apl-play-pause', name:'Play/pause', callback: () => this.togglePlay() });
+    this.addCommand({ id:'apl-next', name:'Next track', callback: () => this.next() });
+    this.addCommand({ id:'apl-prev', name:'Previous track', callback: () => this.prev() });
+    this.addCommand({ id:'apl-stop', name:'Stop (fade out)', callback: () => this.stopFade(3000) });
+    this.addCommand({ id:'apl-rescan-all', name:'Rescan all playlists', callback: () => this.indexAll() });
 
     this.addSettingTab(new SettingsTab(this.app, this));
 
-    // Register per-playlist hotkeys (one command per playlist)
+    // Register per-playlist hotkeys (one command per playlist) //
     this._registerPlaylistHotkeys();
 
     if (this.settings.autoIndexOnLoad){
@@ -592,8 +699,8 @@ module.exports = class AudioPlugList extends Plugin {
   }
 
   onunload() {
-    this._detachFooter();
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE);
+        try{ this._aplDestroyEQ(); }catch(e){}
+this._detachFooter();
     this.audio.pause(); this.audio.src = '';
   }
 
@@ -630,6 +737,16 @@ module.exports = class AudioPlugList extends Plugin {
     var bShuf = controls.createEl('button', { cls:'ap-footer-seg', text:'🔀', title:'Shuffle' }); bShuf.onclick = ()=>{ this.toggleShuffle(); bShuf.classList.toggle('is-active', this.shuffle); };
     var bRpt  = controls.createEl('button', { cls:'ap-footer-seg', text:(this.repeatMode==='one'?'🔂':'🔁'), title:'Repeat' }); bRpt.onclick = ()=>{ this.cycleRepeat(); bRpt.textContent = (this.repeatMode==='one'?'🔂':'🔁'); bRpt.classList.toggle('is-active', this.repeatMode!=='off'); };
 
+
+    // EQ preset cycle button (0-3) //
+    var bEq = controls.createEl('button', { cls:'ap-footer-seg', text:'EQ', title:'Equalizer preset (click to cycle)' });
+    this._aplEqFooterBtn = bEq;
+    try{ this._aplSyncEqButtonState(bEq); }catch(_){}
+    bEq.onclick = async () => {
+      try{ this._aplCycleEqPreset(); }catch(_){}
+      try{ this._aplSyncEqButtonState(bEq); }catch(_){}
+    };
+
     var seekWrap = mk('div', 'ap-seek');
     var cur = mk('span','', '0:00');
     var seek = mk('input'); seek.type='range'; seek.min='0'; seek.max='1000'; seek.value='0';
@@ -654,7 +771,7 @@ module.exports = class AudioPlugList extends Plugin {
     root.appendChild(el);
     this.footerEl = el;
 
-    // init active states only for shuffle/repeat
+    // init active states only for shuffle/repeat //
     if (this.shuffle) bShuf.classList.add('is-active');
     if (this.repeatMode !== 'off') bRpt.classList.add('is-active');
 
@@ -671,7 +788,7 @@ module.exports = class AudioPlugList extends Plugin {
     this.audio.addEventListener('timeupdate', updateTime);
     this.audio.addEventListener('loadedmetadata', updateTime);
   }
-  _detachFooter(){ if (this.footerEl){ this.footerEl.remove(); this.footerEl = null; } }
+  _detachFooter(){ if (this.footerEl){ this.footerEl.remove(); this.footerEl = null; } this._aplEqFooterBtn = null; }
 
   _setFooterTitle(container, text){
     if (this._footerTitleText === text && container._marqueeInitialized) return;
@@ -737,7 +854,7 @@ module.exports = class AudioPlugList extends Plugin {
       for (let i=0;i<pls.length;i++){
         const cfg = pls[i] || {};
         const id = `apl-toggle-playlist-${i}`;
-        const label = `Toggle Play/Pause — ${cfg.name || ('Playlist ' + (i+1))}`;
+        const label = `Toggle play/pause — ${cfg.name || ('Playlist ' + (i+1))}`;
         if (!(cmds && cmds[id])){
           this.addCommand({ id, name: label, callback: ()=> this.togglePlaylistByIndex(i) });
         } else {
@@ -802,8 +919,8 @@ async indexAll(){ for (var i=0;i<this.settings.playlists.length;i++) await this.
     // Deezer playlist (no iframe embed; open externally due to login overlay) //
     var dzid = getDeezerPlaylistId(link);
     if (dzid){
-      this.tracksByPlaylist[i] = []; // avoid trying to parse tracks here
-      this.embedByPlaylist[i]  = null; // no embed; rely on action row buttons
+      this.tracksByPlaylist[i] = []; // avoid trying to parse tracks here //
+      this.embedByPlaylist[i]  = null; // no embed; rely on action row buttons //
       try { new Notice('Deezer playlist detected. Use "Open In Browser" to play.'); } catch(e) {}
       return;
     }
@@ -827,7 +944,7 @@ async indexAll(){ for (var i=0;i<this.settings.playlists.length;i++) await this.
   }
   // FOLDER-based (default) //
   var cfg = this.settings.playlists[i] || { folderPath:'' };
-    var fp = (cfg.folderPath||'').trim();
+    var fp = normalizePath((cfg.folderPath||'').trim());
     var root = fp ? this.app.vault.getAbstractFileByPath(fp) : this.app.vault.getRoot();
     if (!root){ new Notice('Audio PlugList: folder not found for playlist ' + (i+1)); this.tracksByPlaylist[i] = []; return; }
     var tracks = [];
@@ -961,6 +1078,182 @@ togglePlay(){
   seekToFraction(p){ var d = this.audio.duration || 0; if (d) this.audio.currentTime = clamp(p,0,1) * d; }
   setVolume(v){ this.audio.volume = clamp(v,0,1); }
 
+
+// ===== Equalizer Engine (menu-only) ===== //
+_aplHasWebAudio(){
+  try{ return !!(window.AudioContext || window.webkitAudioContext); }catch(e){ return false; }
+}
+_aplInitEQ(audioEl){
+  if (!audioEl || !this._aplHasWebAudio()) return;
+  if (this._aplEq && this._aplEq.ctx && this._aplEq.source) return; // already init //
+
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  let source = null;
+  try {
+    source = ctx.createMediaElementSource(audioEl);
+  } catch(e){
+    // If this fails (rare), just skip EQ rather than breaking the plugin. //
+    try{ console.warn('APL EQ: createMediaElementSource failed, bypassing EQ.', e); }catch(_){}
+    try{ ctx.close(); }catch(_){}
+    return;
+  }
+
+  const freqs = (this.settings && Array.isArray(this.settings.eqBands) && this.settings.eqBands.length===10)
+    ? this.settings.eqBands
+    : [32,62,128,250,500,1000,2000,4000,8000,16000];
+
+  const filters = freqs.map((freq) => {
+    const f = ctx.createBiquadFilter();
+    f.type = 'peaking';
+    f.frequency.value = freq;
+    f.Q.value = 1.1;
+    f.gain.value = 0;
+    return f;
+  });
+
+  // Chain: source -> f0 -> ... -> f9 -> destination //
+  let chain = source;
+  for (let i=0;i<filters.length;i++){ chain.connect(filters[i]); chain = filters[i]; }
+  chain.connect(ctx.destination);
+
+  this._aplEq = { ctx, source, filters };
+
+  // Resume on user gesture/play //
+  try{
+    audioEl.addEventListener('play', () => {
+      try{ if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{}); }catch(_){}
+    });
+  }catch(_){}
+
+  // Apply current preset //
+  this._aplApplyEQ();
+}
+
+_aplEqPresetName(i){
+  try{
+    const n = Number(i);
+    if (n === 0) return "Preset 0 — Default";
+    if (n === 1) return "Preset 1 — Warm";
+    if (n === 2) return "Preset 2 — Bright";
+    if (n === 3) return "Preset 3 — V-Curve";
+  }catch(_){}
+  return "Preset";
+}
+
+_aplSyncEqButtonState(btn){
+  try{
+    if (!btn) return;
+    const active = (this.settings && (this.settings.activeEQ !== undefined)) ? this.settings.activeEQ : "none";
+    let idx = (active === "none" || active === null || active === undefined || active === "") ? null : Number(active);
+    if (idx === null || !isFinite(idx)) idx = null;
+
+    const label = (idx === null) ? "EQ" : ("EQ" + idx);
+    btn.textContent = label;
+
+    if (idx === null){
+      btn.title = "Equalizer: None (click to cycle presets 0–3)";
+    } else {
+      btn.title = "Equalizer: " + this._aplEqPresetName(idx) + " (click to cycle)";
+    }
+  }catch(_){}
+}
+
+_aplCycleEqPreset(){
+  try{
+    const active = (this.settings && (this.settings.activeEQ !== undefined)) ? this.settings.activeEQ : "none";
+    let idx = (active === "none" || active === null || active === undefined || active === "") ? -1 : Number(active);
+    if (!isFinite(idx)) idx = -1;
+
+    // cycle: none -> 0 -> 1 -> 2 -> 3 -> 0 ... //
+    idx = (idx < 0) ? 0 : ((idx + 1) % 4);
+
+    this.settings.activeEQ = idx;
+
+    // persist + apply //
+    try{ this.saveSettings(); }catch(_){}
+    try{ this._aplApplyEQ(); }catch(_){}
+
+    // keep footer button in sync //
+    try{ if (this._aplEqFooterBtn) this._aplSyncEqButtonState(this._aplEqFooterBtn); }catch(_){}
+  }catch(e){
+    try{ console.error("APL EQ cycle error", e); }catch(_){}
+  }
+}
+
+
+_aplDestroyEQ(){
+  try{
+    if (this._aplEq && this._aplEq.filters){
+      try{ this._aplEq.filters.forEach(f=>{ try{ f.disconnect(); }catch(_){}}); }catch(_){}
+    }
+    if (this._aplEq && this._aplEq.source){ try{ this._aplEq.source.disconnect(); }catch(_){ } }
+    if (this._aplEq && this._aplEq.ctx){ try{ this._aplEq.ctx.close(); }catch(_){ } }
+  }catch(_){}
+  this._aplEq = { ctx:null, source:null, filters:null };
+}
+
+_aplApplyEQ(){
+  try{
+    if (!this._aplEq || !this._aplEq.filters) return;
+
+    const filters = this._aplEq.filters;
+    const active = (this.settings && (this.settings.activeEQ !== undefined)) ? this.settings.activeEQ : "none";
+
+    // none => bypass (all gains 0) //
+    if (active === "none" || active === null || active === undefined){
+      for (let i=0;i<filters.length;i++) filters[i].gain.value = 0;
+      return;
+    }
+
+    let idx = Number(active);
+    if (!isFinite(idx)) idx = 0;
+    idx = Math.max(0, Math.min(3, idx));
+
+    const presets = (this.settings && Array.isArray(this.settings.eqPresets)) ? this.settings.eqPresets : null;
+    const preset = (presets && presets[idx] && presets[idx].length===10) ? presets[idx] : [0,0,0,0,0,0,0,0,0,0];
+
+    for (let i=0;i<filters.length;i++){
+      const v = Number(preset[i] || 0);
+      filters[i].gain.value = isFinite(v) ? v : 0;
+    }
+  }catch(e){ try{ console.warn('APL EQ apply failed', e); }catch(_){ } }
+}
+
+_aplDrawEQGraph(canvas, values){
+  try{
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    // background grid //
+    ctx.fillStyle = getComputedStyle(canvas).getPropertyValue('--background-secondary') || '#222';
+    ctx.fillRect(0,0,w,h);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+    for (let i=1;i<5;i++){
+      const y = (h/5)*i;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#a78bfa'; // purple-ish //
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    const arr = Array.isArray(values) ? values : [];
+    const step = w / (10 - 1);
+    for (let i=0;i<10;i++){
+      const v = Number(arr[i] || 0);
+      const y = (h/2) - (isFinite(v)?v:0) * 5.5;
+      const x = i * step;
+      if (i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }catch(_){}
+}
+
   _notifyUi(){ if (typeof this.onUiRefresh === 'function') this.onUiRefresh(); }
 };
 function buildLabel(plugin, t){
@@ -1009,7 +1302,7 @@ function buildLabel(plugin, t){
   var count = 0;
   var timer = setInterval(function(){
     kick();
-    if (++count > 15) clearInterval(timer); // ~12s
+    if (++count > 15) clearInterval(timer); // ~12s //
   }, 800);
 
   // observe future DOM changes (lightweight filter) //
