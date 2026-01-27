@@ -1,5 +1,12 @@
 # Changelog
 
+### 1.3.3 - Community Submission Edits & Fixes
+- Edits to comply with **Community Plugin** submission standards.
+- Various bug cleanup.
+    - Track info appearances.
+    - Folder playlist source selection process.
+
+
 ## 1.3.2 - Community Submission Edits & EQ Feature
 - Added **EQ** with default and 3 preset that can be edited.
 - Cleaned up main.js and styles.css to **Community Submission** standard.
