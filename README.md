@@ -2,7 +2,7 @@
 
 Playlist-based audio player for Obsidian. Point a playlist at a vault **folder** (auto-index audio files), an external **link** (with multi site support), then control playback from a clean **tab view** and a compact **footer mini-player** with shuffle/repeat, optional fade-out stop, EQ presets, and hotkey support.
 
-> **Version:** 1.3.2 - **Obsidian:** 1.5.0+ - **Platforms:** Desktop & Mobile
+> **Version:** 1.3.3 - **Obsidian:** 1.5.0+ - **Platforms:** Desktop & Mobile
 
 ---
 
@@ -116,13 +116,13 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
 
 ## 📝 Changelog
 
-### 1.2.6 - Release Notes
+### 1.2.6 (initial) - Release Notes
 - First expected community release of **Audio PlugList**.
 - Dynamic playlists (Folder/Link), footer mini-player, shuffle/repeat, fade-out stop, artist/album columns, and scan tools.
 - **Hotkey support** for single command play/pause or external link call.
 - Added **FULLGUIDE.md** for detailed guide and **troubleshooting tips**.
 
-### 1.3.2 - Release Notes
+### 1.3.2 (previous) - Release Notes
 - Edits to comply with **Community Plugin** submission standards.
 - Added **EQ** support for folder based playlists. Includes multiple presets plus a bypass option.
 - Updated **Ribbon/Tab Icon**.
@@ -130,6 +130,12 @@ After the plugin is accepted into the Obsidian Community Plugin store, you’ll 
     - Dynamic title lock-up addressed.
     - Footer player not updating current playlist on tab change addressed.
     - Icon and pill adjustments for tablet users.
+
+### 1.3.3 (current) - Release Notes
+- Edits to comply with **Community Plugin** submission standards.
+- Various bug cleanup.
+    - Track info appearances.
+    - Folder playlist source selection process.
 
 ---
 
